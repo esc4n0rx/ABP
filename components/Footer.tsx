@@ -3,10 +3,11 @@
 import { useClock } from "@/hooks/useClock"
 import { useAppStore } from "@/store/useAppStore"
 import { motion } from "framer-motion"
+import { useAuth } from '@/contexts/AuthContext'
 
 export function Footer() {
   const time = useClock()
-  const user = useAppStore((state) => state.user)
+  const { user } = useAuth()
   const version = useAppStore((state) => state.version)
 
   return (
@@ -31,7 +32,7 @@ export function Footer() {
           transition={{ duration: 0.5 }}
           className="text-right"
         >
-          Usuário: <span className="text-geo-secondary">{user}</span>
+           Usuário: <span className="text-geo-secondary">{user?.profile?.name || user?.email}</span>
         </motion.div>
       </div>
     </footer>

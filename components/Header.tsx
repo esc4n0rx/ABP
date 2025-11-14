@@ -4,9 +4,10 @@ import { useAppStore } from "@/store/useAppStore"
 import { useCallback, useState } from "react"
 import { motion } from "framer-motion"
 import { User, LogOut, Settings, Bell } from "lucide-react"
+import { useAuth } from '@/contexts/AuthContext'
 
 export function Header() {
-  const { user, logout } = useAppStore()
+  const { user, logout } = useAuth()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
 
@@ -95,7 +96,7 @@ export function Header() {
                 className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-2xl overflow-hidden"
               >
                 <div className="p-4 border-b border-gray-200">
-                  <p className="text-gray-900 font-semibold text-sm">{user}</p>
+                  <p className="text-gray-900 font-semibold text-sm"> {user?.profile?.name || user?.email}</p>
                   <p className="text-gray-500 text-xs">Consultor SAP</p>
                 </div>
                 <button className="w-full px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-2 text-sm transition-colors">
