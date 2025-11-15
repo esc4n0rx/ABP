@@ -9,11 +9,12 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Abapfy - SAP Consultant Tools",
+  title: "Abapfy - SAP Tools",
   description: "Professional SAP consulting platform powered by GeoSystem",
-  generator: "v0.app",
+  generator: "Paulo Oliveira",
   icons: {
     icon: [
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
       {
         url: "/icon-light-32x32.png",
         media: "(prefers-color-scheme: light)",
@@ -39,10 +40,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`font-sans antialiased bg-white text-gray-900`}>
-       <AuthProvider>
-        {children}
-        <Analytics />
-       </AuthProvider>
+        <AuthProvider>
+          {children}
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   )
