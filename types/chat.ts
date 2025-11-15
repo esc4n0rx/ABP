@@ -1,5 +1,3 @@
-// Types para Chat
-
 export interface ChatProjeto {
   id?: string
   user_id?: string
@@ -32,7 +30,6 @@ export interface ChatStats {
   ultima_mensagem: string | null
 }
 
-// Cores disponíveis para projetos
 export const CORES_PROJETO = [
   { value: '#2b6cfd', label: 'Azul' },
   { value: '#5aa9ff', label: 'Azul Claro' },
@@ -46,13 +43,11 @@ export const CORES_PROJETO = [
   { value: '#14b8a6', label: 'Teal' },
 ] as const
 
-// Interface para histórico de conversa
 export interface ChatHistorico {
   role: 'user' | 'assistant' | 'system'
   content: string
 }
 
-// Interface para request de chat
 export interface ChatRequest {
   mensagem: string
   projeto_id?: string | null
@@ -60,7 +55,6 @@ export interface ChatRequest {
   historico?: ChatHistorico[]
 }
 
-// Interface para response de chat (stream)
 export interface ChatStreamChunk {
   type: 'token' | 'done' | 'error'
   content?: string

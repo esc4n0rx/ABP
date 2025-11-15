@@ -1,5 +1,3 @@
-// Types para Geração de Código ABAP
-
 export interface ProgramaABAP {
   id?: string
   user_id?: string
@@ -8,33 +6,26 @@ export interface ProgramaABAP {
   descricao: string
   status?: 'rascunho' | 'gerado' | 'refinado'
 
-  // Dados do programa
   objetivo: string
   logica_negocio?: string
   especificacao?: string
 
-  // Recursos técnicos
   tabelas?: TabelaABAP[]
   campos?: CampoABAP[]
   funcoes_modulos?: FuncaoModuloABAP[]
 
-  // Código gerado
   codigo_gerado?: CodigoGerado | null
 
-  // Upload de EF
-  ef_upload?: string | null // Texto da EF carregada
-  ef_arquivo?: string | null // Nome do arquivo
+  ef_upload?: string | null 
+  ef_arquivo?: string | null 
 
-  // Perguntas/Refinamento
   perguntas_ia?: PerguntaIA[] | null
   respostas_usuario?: RespostaUsuario[] | null
 
-  // Metadata
   criado_em?: string
   atualizado_em?: string
 }
 
-// Tipos de programas ABAP
 export type TipoProgramaABAP =
   | 'REPORT'           // Relatório
   | 'ALV_REPORT'       // Relatório ALV
@@ -73,68 +64,67 @@ export const TIPOS_PROGRAMA_ABAP: Array<{
   categoria: 'report' | 'oo' | 'enhancement' | 'form' | 'integration' | 'fiori' | 'others'
   descricao: string
 }> = [
-  // Relatórios
+
   { value: 'REPORT', label: 'Relatório ABAP', categoria: 'report', descricao: 'Relatório tradicional com tela de seleção' },
   { value: 'ALV_REPORT', label: 'Relatório ALV', categoria: 'report', descricao: 'Relatório com ALV Grid/List' },
   { value: 'INTERACTIVE_REPORT', label: 'Relatório Interativo', categoria: 'report', descricao: 'Relatório com interatividade e drill-down' },
 
-  // CDS e AMDP
+
   { value: 'CDS_VIEW', label: 'CDS View', categoria: 'report', descricao: 'Core Data Services View' },
   { value: 'AMDP', label: 'AMDP', categoria: 'oo', descricao: 'ABAP Managed Database Procedures' },
 
-  // Orientação a Objetos
+
   { value: 'CLASS', label: 'Classe ABAP', categoria: 'oo', descricao: 'Classe com métodos e atributos' },
   { value: 'INTERFACE', label: 'Interface', categoria: 'oo', descricao: 'Interface ABAP' },
 
-  // Function Modules
+
   { value: 'FUNCTION_MODULE', label: 'Módulo de Função', categoria: 'others', descricao: 'Function Module padrão' },
   { value: 'RFC_FUNCTION', label: 'RFC Function', categoria: 'integration', descricao: 'Function Module habilitado para RFC' },
 
-  // Enhancements
+
   { value: 'BADI', label: 'BADI', categoria: 'enhancement', descricao: 'Business Add-In Implementation' },
   { value: 'ENHANCEMENT', label: 'Enhancement', categoria: 'enhancement', descricao: 'Enhancement Implementation' },
   { value: 'USER_EXIT', label: 'User Exit', categoria: 'enhancement', descricao: 'User Exit Implementation' },
   { value: 'BTE', label: 'BTE', categoria: 'enhancement', descricao: 'Business Transaction Events' },
 
-  // Formulários
+
   { value: 'SMARTFORM', label: 'Smartform', categoria: 'form', descricao: 'Smartform para impressão' },
   { value: 'ADOBE_FORM', label: 'Adobe Form', categoria: 'form', descricao: 'Adobe Interactive Form' },
   { value: 'SAPSCRIPT', label: 'SAPScript', categoria: 'form', descricao: 'SAPScript Form' },
 
-  // Dialog Programming
+
   { value: 'DIALOG_PROGRAM', label: 'Programa de Diálogo', categoria: 'others', descricao: 'Dialog Programming com Dynpro' },
   { value: 'MODULE_POOL', label: 'Module Pool', categoria: 'others', descricao: 'Module Pool Program' },
 
-  // Integrações
+
   { value: 'BDC', label: 'BDC', categoria: 'integration', descricao: 'Batch Data Communication' },
   { value: 'LSMW', label: 'LSMW', categoria: 'integration', descricao: 'Legacy System Migration Workbench' },
   { value: 'IDOC', label: 'IDoc', categoria: 'integration', descricao: 'IDoc Processing Program' },
   { value: 'WEBSERVICE', label: 'Web Service', categoria: 'integration', descricao: 'Web Service ABAP' },
   { value: 'ODATA_SERVICE', label: 'OData Service', categoria: 'integration', descricao: 'OData Service' },
 
-  // Fiori/RAP
+
   { value: 'RAP', label: 'RAP (RESTful ABAP)', categoria: 'fiori', descricao: 'RESTful ABAP Programming' },
   { value: 'FIORI_ELEMENTS', label: 'Fiori Elements', categoria: 'fiori', descricao: 'Fiori Elements Application' },
 
-  // Workflow
+
   { value: 'WORKFLOW', label: 'Workflow', categoria: 'others', descricao: 'Workflow Implementation' },
 
-  // Outros
   { value: 'INCLUDE', label: 'Include Program', categoria: 'others', descricao: 'Include para reutilização de código' },
   { value: 'SUBROUTINE', label: 'Subroutine Pool', categoria: 'others', descricao: 'Pool de Subroutines' },
   { value: 'TYPE_POOL', label: 'Type Pool', categoria: 'others', descricao: 'Type Pool para tipos globais' },
   { value: 'OTHERS', label: 'Outros', categoria: 'others', descricao: 'Outros tipos de programas' },
 ] as const
 
-// Tabelas ABAP
+
 export interface TabelaABAP {
   id?: string
   programa_id?: string
   nome_tabela: string
   descricao: string
   tipo: TipoTabelaABAP
-  alias?: string // Alias usado no código
-  campos_usados?: string[] // Campos específicos usados
+  alias?: string 
+  campos_usados?: string[]
   criado_em?: string
 }
 
@@ -161,20 +151,18 @@ export const TIPOS_TABELA_ABAP = [
   { value: 'INTERNAL', label: 'Internal Table' },
 ] as const
 
-// Campos ABAP
 export interface CampoABAP {
   id?: string
   programa_id?: string
   nome_campo: string
   tabela?: string
   descricao: string
-  tipo_dado: string // CHAR, NUMC, DATS, etc.
+  tipo_dado: string
   tamanho?: number
   obrigatorio?: boolean
   criado_em?: string
 }
 
-// Funções e Módulos para reutilizar
 export interface FuncaoModuloABAP {
   id?: string
   programa_id?: string
@@ -206,20 +194,18 @@ export const TIPOS_FUNCAO_MODULO = [
   { value: 'MACRO', label: 'Macro' },
 ] as const
 
-// Código Gerado pela IA
 export interface CodigoGerado {
-  // Código principal
+
   codigo_principal: string
 
-  // Códigos adicionais (se houver múltiplos artefatos)
+  
   codigos_adicionais?: Array<{
-    tipo: string // 'tela', 'function', 'method', 'include', etc.
+    tipo: string 
     nome: string
     codigo: string
     descricao?: string
   }>
 
-  // Documentação
   documentacao?: {
     descricao_geral: string
     como_usar: string
@@ -228,14 +214,12 @@ export interface CodigoGerado {
     exemplos?: string[]
   }
 
-  // Configurações necessárias
   configuracoes?: {
     transacoes?: string[]
     autorizacoes?: string[]
     customizacoes?: string[]
   }
 
-  // Dependências
   dependencias?: {
     tabelas?: string[]
     funcoes?: string[]
@@ -243,16 +227,13 @@ export interface CodigoGerado {
     includes?: string[]
   }
 
-  // Testes sugeridos
   testes_sugeridos?: string[]
 
-  // Metadata
   gerado_em?: string
   modelo_usado?: string
   versao?: string
 }
 
-// Sistema de Perguntas da IA
 export interface PerguntaIA {
   id: string
   pergunta: string
@@ -267,7 +248,6 @@ export interface RespostaUsuario {
   criado_em?: string
 }
 
-// Estrutura de Perguntas Retornadas pela IA
 export interface RespostaComPerguntas {
   tipo: 'perguntas'
   perguntas: Array<{
@@ -277,37 +257,29 @@ export interface RespostaComPerguntas {
   mensagem: string
 }
 
-// Form Data para Steps Dinâmicos
+
 export interface AbapFormData {
-  // Modo de criação
   modo_criacao: 'upload' | 'manual'
 
-  // Upload de EF
   ef_arquivo?: File | null
   ef_texto?: string
 
-  // Manual - Step 1: Tipo
   tipo_programa: TipoProgramaABAP
 
-  // Manual - Step 2: Especificação
   nome_programa: string
   objetivo: string
 
-  // Manual - Step 3: Lógica de Negócio
   logica_negocio: string
-  processos?: string[] // Processos principais
-  regras_negocio?: string[] // Regras de negócio
+  processos?: string[] 
+  regras_negocio?: string[]
 
-  // Manual - Step 4: Dados
   tabelas: TabelaABAP[]
   campos: CampoABAP[]
   funcoes_modulos: FuncaoModuloABAP[]
 
-  // Contexto adicional por tipo
   contexto_especifico?: Record<string, any>
 }
 
-// Contextos específicos por tipo de programa
 export interface ContextoReport {
   tem_tela_selecao: boolean
   campos_selecao?: Array<{
@@ -359,7 +331,7 @@ export interface ContextoFunctionModule {
 
 export interface ContextoClass {
   tipo_classe: 'normal' | 'singleton' | 'abstract' | 'final'
-  heranca?: string // Classe pai
+  heranca?: string
   interfaces?: string[]
   metodos_publicos?: Array<{
     nome: string
@@ -405,7 +377,6 @@ export interface ContextoOData {
   tem_autenticacao: boolean
 }
 
-// Tipos para Estatísticas
 export interface AbapStats {
   total_programas: number
   programas_gerados: number
@@ -419,7 +390,6 @@ export interface AbapStats {
   }>
 }
 
-// Tipos para listagem de programas
 export interface ProgramaABAPListItem {
   id: string
   nome_programa: string
@@ -430,7 +400,6 @@ export interface ProgramaABAPListItem {
   atualizado_em: string
 }
 
-// Helpers para validação
 export const CAMPOS_OBRIGATORIOS_POR_TIPO: Record<TipoProgramaABAP, string[]> = {
   REPORT: ['nome_programa', 'objetivo', 'logica_negocio', 'tabelas'],
   ALV_REPORT: ['nome_programa', 'objetivo', 'logica_negocio', 'tabelas'],
@@ -464,13 +433,11 @@ export const CAMPOS_OBRIGATORIOS_POR_TIPO: Record<TipoProgramaABAP, string[]> = 
   OTHERS: ['nome_programa', 'objetivo'],
 }
 
-// Helper para obter label do tipo
 export function getTipoProgramaLabel(tipo: TipoProgramaABAP): string {
   const found = TIPOS_PROGRAMA_ABAP.find(t => t.value === tipo)
   return found?.label || tipo
 }
 
-// Helper para obter categoria do tipo
 export function getTipoProgramaCategoria(tipo: TipoProgramaABAP): string {
   const found = TIPOS_PROGRAMA_ABAP.find(t => t.value === tipo)
   return found?.categoria || 'others'

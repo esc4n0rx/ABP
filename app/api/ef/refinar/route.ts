@@ -6,7 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const formData: EFFormData = await request.json()
 
-    // Validação básica dos dados
     if (!formData.titulo || !formData.modulo_sap || !formData.empresa) {
       return NextResponse.json(
         { error: 'Dados obrigatórios faltando' },
@@ -14,7 +13,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Chama a função de refinamento
     const resultado = await refinarEspecificacaoFuncional(formData)
 
     if (!resultado.success) {

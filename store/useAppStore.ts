@@ -15,7 +15,6 @@ interface AppStoreState {
   theme: "light" | "dark"
   version: string
 
-  // Actions
   setUser: (user: string) => void
   logout: () => void
   openTab: (appId: string, appName: string) => void

@@ -35,7 +35,6 @@ import {
   Plus,
   X,
 } from "lucide-react"
-import * as pdfjsLib from "pdfjs-dist"
 import {
   AbapFormData,
   TIPOS_PROGRAMA_ABAP,
@@ -46,8 +45,6 @@ import {
   FuncaoModuloABAP,
 } from "@/types/abap"
 import { CodigoGeradoViewer } from "./CodigoGeradoViewer"
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`
 
 interface AbapModalProps {
   open: boolean
@@ -136,47 +133,67 @@ export function AbapModal({ open, onClose, onProgramaGerado }: AbapModalProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validação de extensão no frontend
     const ext = file.name.split(".").pop()?.toLowerCase()
     if (ext !== "txt" && ext !== "pdf") {
       toast.error("Apenas arquivos TXT ou PDF são permitidos")
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
       return
     }
 
-    setEfArquivo(file)
-    const toastId = toast.loading(`Lendo arquivo ${file.name}...`)
+    // Validação de tamanho no frontend (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error("Arquivo muito grande. Tamanho máximo: 10MB")
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+      return
+    }
+
+    const toastId = toast.loading(`Processando arquivo ${file.name}...`)
 
     try {
-      let text = ""
-      if (ext === "txt") {
-        text = await file.text()
-      } else if (ext === "pdf") {
-        const arrayBuffer = await file.arrayBuffer()
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-        let fullText = ""
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i)
-          const textContent = await page.getTextContent()
-          fullText += textContent.items.map((item: any) => item.str).join(" ") + "\n"
-        }
-        text = fullText
+      // Criar FormData para enviar o arquivo
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
+
+      // Enviar para a API de upload
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || "Erro ao processar arquivo")
       }
 
+      // Sucesso - atualiza o estado com o texto extraído
+      setEfArquivo(file)
       setFormData({
         ...formData,
-        ef_texto: text,
+        ef_texto: result.data.text,
         ef_arquivo: file.name as any,
       })
-      toast.success("Arquivo carregado e processado com sucesso!", { id: toastId })
+
+      toast.success(
+        `Arquivo carregado com sucesso! ${result.data.wordCount} palavras extraídas.`,
+        { id: toastId }
+      )
     } catch (error: any) {
       console.error("Erro ao processar o arquivo:", error)
-      let errorMessage = "Não foi possível ler o conteúdo do arquivo."
-      if (error.name === "MissingPDFException") {
-        errorMessage = "Arquivo PDF inválido ou corrompido."
-      } else if (error.name === "UnexpectedResponseException") {
-        errorMessage = "Erro de rede ao carregar o PDF. Verifique sua conexão."
-      } else if (error.message?.includes("password")) {
-        errorMessage = "Este PDF está protegido por senha e não pode ser lido."
+
+      // Limpa o estado em caso de erro
+      setEfArquivo(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
       }
+
+      const errorMessage = error.message || "Não foi possível processar o arquivo."
       toast.error(errorMessage, { id: toastId })
     }
   }
@@ -186,6 +203,13 @@ export function AbapModal({ open, onClose, onProgramaGerado }: AbapModalProps) {
     if (currentStep === 1 && formData.modo_criacao === "manual") {
       if (!formData.tipo_programa) {
         toast.error("Selecione o tipo de programa")
+        return
+      }
+    }
+
+    if (currentStep === 1 && formData.modo_criacao === "upload") {
+      if (!efArquivo || !formData.ef_texto) {
+        toast.error("Por favor, faça o upload de um arquivo TXT ou PDF com a especificação")
         return
       }
     }

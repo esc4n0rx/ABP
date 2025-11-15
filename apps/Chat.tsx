@@ -228,7 +228,7 @@ export function Chat() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Chat SAP Assistant
+          Chat
         </h1>
         <p className="text-gray-600">
           Assistente especializado em SAP, ABAP, Fiori e tecnologias relacionadas

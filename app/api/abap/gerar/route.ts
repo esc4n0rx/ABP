@@ -7,6 +7,7 @@ import {
   removerThinkingBlocks,
   extrairJSON,
   validarRespostaABAP,
+  sanitizarJSON,
 } from '@/lib/prompts/abapprompt'
 import { AbapFormData } from '@/types/abap'
 import { logger } from '@/lib/utils/logger'
@@ -167,8 +168,29 @@ export async function POST(request: NextRequest) {
           }
 
           // Parse do JSON (usa o JSON extraído da validação se disponível)
-          const jsonParaParsear = validacao.jsonExtraido || jsonLimpo
-          const respostaJSON = JSON.parse(jsonParaParsear)
+          let jsonParaParsear = validacao.jsonExtraido || jsonLimpo
+
+          // Sanitiza caracteres de controle problemáticos antes do parse
+          jsonParaParsear = sanitizarJSON(jsonParaParsear)
+
+          let respostaJSON: any
+          try {
+            respostaJSON = JSON.parse(jsonParaParsear)
+          } catch (parseError: any) {
+            logger.error('ERRO AO PARSEAR JSON FINAL', {
+              erro: parseError.message,
+              jsonTruncado: jsonParaParsear.substring(0, 500),
+              tamanhoJSON: jsonParaParsear.length,
+            })
+
+            const errorData = JSON.stringify({
+              type: 'error',
+              error: `Erro ao processar resposta da IA: ${parseError.message}. Tente novamente.`,
+            })
+            controller.enqueue(encoder.encode(`data: ${errorData}\n\n`))
+            controller.close()
+            return
+          }
 
           logger.logSucesso(respostaJSON.tipo, {
             tipo: respostaJSON.tipo,

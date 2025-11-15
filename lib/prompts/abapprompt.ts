@@ -439,12 +439,32 @@ export function removerThinkingBlocks(texto: string): string {
   return resultado
 }
 
+// Sanitiza JSON removendo caracteres de controle inválidos
+export function sanitizarJSON(jsonString: string): string {
+  if (!jsonString) return '{}'
+
+  // Remove caracteres de controle inválidos, mas preserva \n, \r, \t quando já escapados
+  let sanitizado = jsonString
+    // Remove caracteres de controle ASCII 0-31 exceto \n (10), \r (13), \t (9)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+    // Remove caracteres Unicode de controle problemáticos
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+    // Normaliza quebras de linha
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+
+  return sanitizado
+}
+
 // Extrai JSON de uma resposta que pode conter texto adicional
 export function extrairJSON(texto: string): string {
   if (!texto) return '{}'
 
   // Remove thinking blocks primeiro
   let textoLimpo = removerThinkingBlocks(texto)
+
+  // Sanitiza caracteres de controle
+  textoLimpo = sanitizarJSON(textoLimpo)
 
   // Múltiplas tentativas de extração de JSON
 
@@ -540,7 +560,7 @@ export function validarRespostaABAP(resposta: string): {
   }
 
   // Extrai JSON
-  const jsonString = extrairJSON(respostaLimpa)
+  let jsonString = extrairJSON(respostaLimpa)
 
   if (!jsonString || jsonString.trim() === '' || jsonString === '{}') {
     return {
@@ -551,16 +571,28 @@ export function validarRespostaABAP(resposta: string): {
     }
   }
 
+  // Sanitiza novamente antes do parse (garantia adicional)
+  jsonString = sanitizarJSON(jsonString)
+
   // Tenta parsear JSON
   let json: any
   try {
     json = JSON.parse(jsonString)
   } catch (e: any) {
-    return {
-      isValid: false,
-      error: 'A resposta da IA não está em formato JSON válido. Tente novamente.',
-      erroDetalhado: `Erro ao parsear JSON: ${e.message}`,
-      jsonExtraido: jsonString,
+    // Tenta uma última sanitização mais agressiva
+    try {
+      // Remove espaços e quebras extras
+      const jsonAgressivo = jsonString
+        .replace(/\s+/g, ' ')
+        .trim()
+      json = JSON.parse(jsonAgressivo)
+    } catch (e2: any) {
+      return {
+        isValid: false,
+        error: 'A resposta da IA não está em formato JSON válido. Tente novamente.',
+        erroDetalhado: `Erro ao parsear JSON: ${e.message}`,
+        jsonExtraido: jsonString,
+      }
     }
   }
 

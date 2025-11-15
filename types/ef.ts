@@ -1,5 +1,3 @@
-// Types para Especificações Funcionais
-
 export interface EspecificacaoFuncional {
   id?: string
   user_id?: string
@@ -8,21 +6,17 @@ export interface EspecificacaoFuncional {
   descricao: string
   status?: 'rascunho' | 'refinado' | 'publicado'
 
-  // Dados SAP
   modulo_sap: string
   data_criacao?: string
   empresa: string
   tipo_programa: string
 
-  // Conteúdo
   visao_geral: string
   motivo_ef: string
   especificacao_detalhada: string
 
-  // Conteúdo refinado pela IA
   conteudo_refinado?: EFRefinada | null
 
-  // Metadata
   criado_em?: string
   atualizado_em?: string
 }
@@ -54,9 +48,7 @@ export interface ModuloSAP {
   criado_em?: string
 }
 
-// Estrutura do conteúdo refinado pela IA
 export interface EFRefinada {
-  // Informações básicas
   informacoes_basicas: {
     titulo: string
     versao: string
@@ -66,27 +58,23 @@ export interface EFRefinada {
     empresa: string
   }
 
-  // Dados SAP
   dados_sap: {
     modulo: string
     tipo_programa: string
   }
 
-  // Equipe
   equipe: Array<{
     nome: string
     cargo: string
     email?: string
   }>
 
-  // Visão Geral
   visao_geral: {
     descricao: string
     motivo: string
     objetivos: string[]
   }
 
-  // Especificação Detalhada
   especificacao: {
     introducao: string
     processos: Array<{
@@ -98,7 +86,6 @@ export interface EFRefinada {
     consideracoes_tecnicas: string[]
   }
 
-  // Recursos Técnicos
   recursos_tecnicos: {
     tabelas: Array<{
       nome: string
@@ -112,7 +99,6 @@ export interface EFRefinada {
     }>
   }
 
-  // Anexos e Observações
   observacoes?: {
     notas_importantes?: string[]
     proximos_passos?: string[]
@@ -120,36 +106,28 @@ export interface EFRefinada {
   }
 }
 
-// Form data para os steps
 export interface EFFormData {
-  // Step 1: Informações Básicas
   titulo: string
   versao: string
   autor: string
   descricao: string
 
-  // Step 2: Dados SAP
   modulo_sap: string
   data_criacao: string
   empresa: string
   tipo_programa: string
 
-  // Step 3: Equipe
   equipe: MembroEquipe[]
 
-  // Step 4: Visão Geral
   visao_geral: string
   motivo_ef: string
 
-  // Step 5: Especificação Detalhada
   especificacao_detalhada: string
 
-  // Step 6: Tabelas e Módulos
   tabelas: TabelaSAP[]
   modulos: ModuloSAP[]
 }
 
-// Tipos para estatísticas
 export interface EFStats {
   total_efs: number
   efs_publicadas: number
@@ -159,7 +137,6 @@ export interface EFStats {
   ultima_ef_criada: string | null
 }
 
-// Módulos SAP disponíveis
 export const MODULOS_SAP = [
   { value: 'SD', label: 'SD - Sales and Distribution' },
   { value: 'MM', label: 'MM - Materials Management' },
@@ -179,7 +156,6 @@ export const MODULOS_SAP = [
   { value: 'SRM', label: 'SRM - Supplier Relationship Management' },
 ] as const
 
-// Tipos de programas SAP
 export const TIPOS_PROGRAMA = [
   { value: 'REPORT', label: 'Report/Programa' },
   { value: 'FUNCTION', label: 'Function Module' },
@@ -198,7 +174,6 @@ export const TIPOS_PROGRAMA = [
   { value: 'OTHERS', label: 'Outros' },
 ] as const
 
-// Tipos de tabelas SAP
 export const TIPOS_TABELA = [
   { value: 'STANDARD', label: 'Tabela Padrão SAP' },
   { value: 'ZTABLE', label: 'Z-Table (Customizada)' },
@@ -209,7 +184,6 @@ export const TIPOS_TABELA = [
   { value: 'POOLED', label: 'Pooled Table' },
 ] as const
 
-// Tipos de módulos/componentes
 export const TIPOS_MODULO = [
   { value: 'FM', label: 'Function Module' },
   { value: 'CLASS', label: 'Class/Interface' },
@@ -221,7 +195,6 @@ export const TIPOS_MODULO = [
   { value: 'METHOD', label: 'Method' },
 ] as const
 
-// Cargos comuns em projetos SAP
 export const CARGOS_EQUIPE = [
   'Analista de Negócios',
   'Consultor Funcional',
