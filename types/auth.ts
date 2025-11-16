@@ -8,6 +8,7 @@ export interface UserProfile {
 }
 
 export interface AuthUser {
+  created_at: string | number | Date
   id: string
   email: string
   profile: UserProfile | null

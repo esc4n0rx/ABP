@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import toast from "react-hot-toast"
 import { UserProfile } from "@/types/profile"
+import { create } from "domain"
 
-// Modal wrapper component
 function Modal({
   isOpen,
   onClose,
@@ -77,12 +77,13 @@ export function Header() {
     role: "Consultor SAP",
     department: "",
     bio: "",
+    created_at: ""
   })
 
   const handleLogout = useCallback(async () => {
     try {
       await logout()
-      window.location.href = "/login"
+      window.location.href = "/"
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
       toast.error("Erro ao fazer logout")
@@ -105,6 +106,7 @@ export function Header() {
           role: data.data.role || "Consultor SAP",
           department: data.data.department || "",
           bio: data.data.bio || "",
+          created_at: data.data.created_at || ""
         })
       } else {
         toast.error("Erro ao carregar perfil")
@@ -172,6 +174,7 @@ export function Header() {
         role: profile.role || "Consultor SAP",
         department: profile.department || "",
         bio: profile.bio || "",
+        created_at: profile.created_at || ""
       })
     }
   }

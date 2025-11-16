@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser({
       id: authUser.id,
       email: authUser.email!,
+      created_at: authUser.created_at,
       profile: profile || null
     })
   }
