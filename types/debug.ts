@@ -28,6 +28,7 @@ export interface AnaliseCenarioData {
   transacao: string
   descricao_cenario: string
   descricao_problema: string
+  mensagem_erro?: string // Mensagem de erro para buscar notas SAP
   programa_customizado?: string // Apenas se transação começar com Z ou Y
   passos_reproducao?: string
   dados_entrada?: string
@@ -35,6 +36,13 @@ export interface AnaliseCenarioData {
 
 // União de todos os tipos de análise
 export type AnaliseDebugData = AnaliseSMQ2Data | AnaliseABAPData | AnaliseCenarioData
+
+// Link de nota SAP retornado pela API
+export interface NotaSAPLink {
+  titulo: string
+  link: string
+  fonte?: string
+}
 
 // Resposta da IA para análise de debug
 export interface RespostaDebugIA {
@@ -51,6 +59,7 @@ export interface RespostaDebugIA {
   prevencao: string[]
   recursos_adicionais?: {
     notas_sap?: string[]
+    notas_sap_links?: NotaSAPLink[] // Links reais das notas SAP da API
     transacoes_uteis?: string[]
     documentacao?: string[]
   }

@@ -17,6 +17,8 @@ import {
   AlertTriangle,
   ChevronRight,
   RefreshCw,
+  ExternalLink,
+  BookOpen,
 } from "lucide-react"
 import {
   TipoAnaliseDebug,
@@ -26,12 +28,59 @@ import {
   AnaliseDebugListItem,
   AnaliseDebugSalva,
   RespostaDebugIA,
+  NotaSAPLink,
   TIPOS_OBJETO_ABAP,
   getCorCriticidade,
   getIconeCriticidade,
   getLabelTipoAnalise,
   isTransacaoCustomizada,
 } from "@/types/debug"
+
+// Função para buscar notas SAP via microserviço
+async function buscarNotasSAP(nomeErro: string): Promise<NotaSAPLink[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SAP_NOTES_API_URL
+    const token = process.env.NEXT_PUBLIC_SAP_NOTES_API_TOKEN
+
+    if (!baseUrl || !token) {
+      console.warn("API de notas SAP não configurada (variáveis de ambiente ausentes)")
+      return []
+    }
+
+    const response = await fetch(`${baseUrl}/buscar-notas`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        nome_fila: null,
+        nome_erro: nomeErro,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error("Erro ao buscar notas SAP:", response.status)
+      return []
+    }
+
+    const data = await response.json()
+
+    // Adaptar estrutura da resposta para NotaSAPLink[]
+    if (data && Array.isArray(data.links)) {
+      return data.links.map((link: any) => ({
+        titulo: link.titulo || link.title || "Nota SAP",
+        link: link.link || link.url,
+        fonte: link.fonte || link.source,
+      }))
+    }
+
+    return []
+  } catch (error) {
+    console.error("Erro ao buscar notas SAP:", error)
+    return []
+  }
+}
 
 // Modal wrapper component
 function Modal({
@@ -121,6 +170,7 @@ export function DebugCodigo() {
     transacao: "",
     descricao_cenario: "",
     descricao_problema: "",
+    mensagem_erro: "",
     programa_customizado: "",
     passos_reproducao: "",
     dados_entrada: "",
@@ -182,6 +232,24 @@ export function DebugCodigo() {
       }
 
       const respostaIA: RespostaDebugIA = dataAnalise.data
+
+      // Buscar notas SAP baseado no tipo de análise
+      let notasSAP: NotaSAPLink[] = []
+      if (tipo === "SMQ2" && dados.nome_fila) {
+        // Para SMQ2, usar o campo nome_fila que agora contém o "Erro descritivo"
+        notasSAP = await buscarNotasSAP(dados.nome_fila)
+      } else if (tipo === "CENARIO" && dados.mensagem_erro) {
+        // Para CENARIO, usar o campo mensagem_erro
+        notasSAP = await buscarNotasSAP(dados.mensagem_erro)
+      }
+
+      // Adicionar links das notas SAP na resposta da IA
+      if (notasSAP.length > 0) {
+        if (!respostaIA.recursos_adicionais) {
+          respostaIA.recursos_adicionais = {}
+        }
+        respostaIA.recursos_adicionais.notas_sap_links = notasSAP
+      }
 
       // Salva no banco
       const responseSalvar = await fetch("/api/debug/salvar", {
@@ -328,6 +396,7 @@ export function DebugCodigo() {
       transacao: "",
       descricao_cenario: "",
       descricao_problema: "",
+      mensagem_erro: "",
       programa_customizado: "",
       passos_reproducao: "",
       dados_entrada: "",
@@ -596,7 +665,7 @@ export function DebugCodigo() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nome da Fila <span className="text-red-500">*</span>
+              Erro Descritivo <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -605,7 +674,7 @@ export function DebugCodigo() {
                 setFormSMQ2({ ...formSMQ2, nome_fila: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Ex: XBTCQ001"
+              placeholder="Ex: Erro ao processar RFC - Timeout na conexão"
               required
             />
           </div>
@@ -880,6 +949,23 @@ export function DebugCodigo() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mensagem de Erro (Opcional)
+            </label>
+            <textarea
+              value={formCenario.mensagem_erro}
+              onChange={(e) =>
+                setFormCenario({
+                  ...formCenario,
+                  mensagem_erro: e.target.value,
+                })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[80px]"
+              placeholder="Ex: RFC_ERROR_SYSTEM_FAILURE - Timeout ao conectar com sistema remoto"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Passos para Reproduzir (Opcional)
             </label>
             <textarea
@@ -1112,6 +1198,50 @@ export function DebugCodigo() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                </div>
+              )}
+
+            {/* Links de Notas SAP */}
+            {analiseDetalhes.resposta_ia.recursos_adicionais?.notas_sap_links &&
+              analiseDetalhes.resposta_ia.recursos_adicionais.notas_sap_links.length >
+                0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <BookOpen size={20} className="text-blue-600" />
+                    Notas SAP Encontradas
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {analiseDetalhes.resposta_ia.recursos_adicionais.notas_sap_links.map(
+                      (nota, idx) => (
+                        <Card
+                          key={idx}
+                          className="p-4 hover:shadow-lg transition-shadow border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-white"
+                        >
+                          <a
+                            href={nota.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-3 group"
+                          >
+                            <ExternalLink
+                              size={20}
+                              className="text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-1 line-clamp-2">
+                                {nota.titulo}
+                              </h4>
+                              {nota.fonte && (
+                                <p className="text-xs text-gray-500">
+                                  Fonte: {nota.fonte}
+                                </p>
+                              )}
+                            </div>
+                          </a>
+                        </Card>
+                      )
+                    )}
                   </div>
                 </div>
               )}

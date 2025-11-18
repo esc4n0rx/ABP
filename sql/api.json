@@ -1,0 +1,56 @@
+{
+  "api_config": {
+    "base_url": "http://m840cwcks40co8c8scc8gg80.195.35.17.111.sslip.io",
+    "auth_header": "Authorization: Bearer <SEU_TOKEN_DEFINIDO_NO_ENV>"
+  },
+  "endpoints": [
+    {
+      "name": "Buscar Notas SAP",
+      "route": "/buscar-notas",
+      "method": "POST",
+      "description": "Busca links e notas no SAP Community/Launchpad baseados em um erro.",
+      "response_type": "application/json",
+      "payload_schema": {
+        "nome_fila": "string | null (Opcional)",
+        "nome_erro": "string (Obrigatório)"
+      },
+      "payload_example": {
+        "nome_fila": "FILA_ERRO_01",
+        "nome_erro": "Syntax error in program GP_ERR_ZTEST"
+      }
+    },
+    {
+      "name": "Gerar Documento EF (Word)",
+      "route": "/gerar-ef-docx",
+      "method": "POST",
+      "description": "Recebe os dados da EF, preenche o template .docx e retorna o arquivo binário para download.",
+      "response_type": "blob",
+      "payload_schema": {
+        "projeto_titulo": "string",
+        "autor": "string",
+        "descricao_breve": "string",
+        "modulo_sap": "string",
+        "data_criacao": "string",
+        "empresa_cliente": "string",
+        "descricao_resumida": "string",
+        "consultor_nome": "string",
+        "consultor_cargo": "string",
+        "visao_geral": "string",
+        "especificacao_detalhada": "string"
+      },
+      "payload_example": {
+        "projeto_titulo": "Automação de Ordens de Venda",
+        "autor": "João Silva",
+        "descricao_breve": "Criação de BAPI customizada",
+        "modulo_sap": "SD",
+        "data_criacao": "20/11/2023",
+        "empresa_cliente": "Tech Solutions SA",
+        "descricao_resumida": "Desenvolvimento de interface para criação automática de OV via API.",
+        "consultor_nome": "Maria Souza",
+        "consultor_cargo": "Consultora Funcional SD",
+        "visao_geral": "Atualmente o processo é manual. O objetivo é automatizar a entrada de dados...",
+        "especificacao_detalhada": "1. Criar estrutura Z... 2. Chamar BAPI_SALESORDER_CREATEFROMDAT2..."
+      }
+    }
+  ]
+}

@@ -65,6 +65,8 @@ export function EFModal({ open, onClose, onSuccess }: EFModalProps) {
     data_criacao: new Date().toISOString().split("T")[0],
     empresa: "",
     tipo_programa: "",
+    consultor_nome: user?.profile?.nome || user?.email || "",
+    consultor_cargo: "",
     equipe: [],
     visao_geral: "",
     motivo_ef: "",
@@ -111,6 +113,12 @@ export function EFModal({ open, onClose, onSuccess }: EFModalProps) {
         !formData.tipo_programa
       ) {
         toast.error("Preencha todos os campos SAP")
+        return
+      }
+    }
+    if (currentStep === 3) {
+      if (!formData.consultor_nome || !formData.consultor_cargo) {
+        toast.error("Preencha os dados do consultor responsável")
         return
       }
     }
@@ -226,8 +234,55 @@ export function EFModal({ open, onClose, onSuccess }: EFModalProps) {
     setIsProcessing(true)
 
     try {
+      // Monta payload para a API de geração de DOCX
+      const payload = {
+        projeto_titulo: efRefinada.informacoes_basicas.titulo,
+        autor: efRefinada.informacoes_basicas.autor,
+        descricao_breve: efRefinada.informacoes_basicas.descricao,
+        modulo_sap: efRefinada.dados_sap.modulo,
+        data_criacao: formatarDataParaAPI(efRefinada.informacoes_basicas.data_criacao),
+        empresa_cliente: efRefinada.informacoes_basicas.empresa,
+        descricao_resumida: efRefinada.informacoes_basicas.descricao_resumida,
+        consultor_nome: efRefinada.consultor.nome,
+        consultor_cargo: efRefinada.consultor.cargo,
+        visao_geral: efRefinada.visao_geral.descricao,
+        especificacao_detalhada: montarEspecificacaoDetalhada(efRefinada),
+      }
+
+      // Chama API de geração de DOCX
+      const apiUrl = process.env.NEXT_PUBLIC_SAP_NOTES_API_URL || "http://m840cwcks40co8c8scc8gg80.195.35.17.111.sslip.io"
+      const apiToken = process.env.NEXT_PUBLIC_SAP_NOTES_API_TOKEN
+
+      const responseDocx = await fetch(`${apiUrl}/gerar-ef-docx`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiToken}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!responseDocx.ok) {
+        throw new Error("Erro ao gerar documento DOCX")
+      }
+
+      // Recebe o blob do DOCX
+      const blob = await responseDocx.blob()
+
+      // Faz download do arquivo
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${efRefinada.informacoes_basicas.titulo.replace(/\s+/g, "_")}_EF.docx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      toast.success("Documento DOCX gerado com sucesso!")
+
       // Salva no banco
-      const response = await fetch("/api/ef/salvar", {
+      const responseSalvar = await fetch("/api/ef/salvar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -241,43 +296,86 @@ export function EFModal({ open, onClose, onSuccess }: EFModalProps) {
         }),
       })
 
-      const result = await response.json()
+      const resultSalvar = await responseSalvar.json()
 
-      if (!result.success) {
-        toast.error(result.error || "Erro ao salvar EF")
-        setIsProcessing(false)
-        return
+      if (resultSalvar.success) {
+        toast.success("EF salva no banco de dados!")
       }
-
-      toast.success("EF salva com sucesso!")
-
-      // Gera PDF
-      gerarPDF(efRefinada)
 
       // Fecha modal e atualiza dashboard
       onSuccess()
       handleClose()
     } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar EF")
+      console.error("Erro ao gerar DOCX:", error)
+      toast.error(error.message || "Erro ao gerar documento")
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const gerarPDF = (ef: EFRefinada) => {
-    // Cria HTML para PDF
-    const htmlContent = gerarHTMLParaPDF(ef)
+  // Formata data para o padrão esperado pela API (dd/mm/yyyy)
+  const formatarDataParaAPI = (dataISO: string): string => {
+    const date = new Date(dataISO)
+    const dia = String(date.getDate()).padStart(2, "0")
+    const mes = String(date.getMonth() + 1).padStart(2, "0")
+    const ano = date.getFullYear()
+    return `${dia}/${mes}/${ano}`
+  }
 
-    // Cria janela para impressão
-    const printWindow = window.open("", "_blank")
-    if (printWindow) {
-      printWindow.document.write(htmlContent)
-      printWindow.document.close()
-      printWindow.focus()
-      setTimeout(() => {
-        printWindow.print()
-      }, 250)
+  // Monta especificação detalhada concatenando todas as seções
+  const montarEspecificacaoDetalhada = (ef: EFRefinada): string => {
+    let spec = `${ef.especificacao.introducao}\n\n`
+
+    // Processos
+    if (ef.especificacao.processos.length > 0) {
+      spec += "PROCESSOS:\n\n"
+      ef.especificacao.processos.forEach((proc, idx) => {
+        spec += `${idx + 1}. ${proc.nome}\n`
+        spec += `${proc.descricao}\n`
+        spec += "Passos:\n"
+        proc.passos.forEach((passo, pIdx) => {
+          spec += `  ${pIdx + 1}. ${passo}\n`
+        })
+        spec += "\n"
+      })
     }
+
+    // Regras de negócio
+    if (ef.especificacao.regras_negocio.length > 0) {
+      spec += "REGRAS DE NEGÓCIO:\n\n"
+      ef.especificacao.regras_negocio.forEach((regra, idx) => {
+        spec += `${idx + 1}. ${regra}\n`
+      })
+      spec += "\n"
+    }
+
+    // Considerações técnicas
+    if (ef.especificacao.consideracoes_tecnicas.length > 0) {
+      spec += "CONSIDERAÇÕES TÉCNICAS:\n\n"
+      ef.especificacao.consideracoes_tecnicas.forEach((consideracao, idx) => {
+        spec += `${idx + 1}. ${consideracao}\n`
+      })
+      spec += "\n"
+    }
+
+    // Tabelas
+    if (ef.recursos_tecnicos.tabelas.length > 0) {
+      spec += "TABELAS UTILIZADAS:\n\n"
+      ef.recursos_tecnicos.tabelas.forEach((tab) => {
+        spec += `- ${tab.nome} (${tab.tipo}): ${tab.descricao}\n`
+      })
+      spec += "\n"
+    }
+
+    // Módulos
+    if (ef.recursos_tecnicos.modulos.length > 0) {
+      spec += "MÓDULOS/COMPONENTES:\n\n"
+      ef.recursos_tecnicos.modulos.forEach((mod) => {
+        spec += `- ${mod.nome} (${mod.tipo}): ${mod.descricao}\n`
+      })
+    }
+
+    return spec
   }
 
   const handleClose = () => {
@@ -291,6 +389,8 @@ export function EFModal({ open, onClose, onSuccess }: EFModalProps) {
       data_criacao: new Date().toISOString().split("T")[0],
       empresa: "",
       tipo_programa: "",
+      consultor_nome: user?.profile?.nome || user?.email || "",
+      consultor_cargo: "",
       equipe: [],
       visao_geral: "",
       motivo_ef: "",
@@ -470,11 +570,53 @@ export function EFModal({ open, onClose, onSuccess }: EFModalProps) {
                   </div>
                 )}
 
-                {/* Step 3: Equipe */}
+                {/* Step 3: Consultor e Equipe */}
                 {currentStep === 3 && (
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Equipe do Projeto
+                      Consultor Responsável
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Nome do Consultor *</Label>
+                        <Input
+                          value={formData.consultor_nome}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              consultor_nome: e.target.value,
+                            })
+                          }
+                          placeholder="Nome do consultor principal"
+                        />
+                      </div>
+                      <div>
+                        <Label>Cargo do Consultor *</Label>
+                        <Select
+                          value={formData.consultor_cargo}
+                          onValueChange={(value) =>
+                            setFormData({
+                              ...formData,
+                              consultor_cargo: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o cargo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CARGOS_EQUIPE.map((cargo) => (
+                              <SelectItem key={cargo} value={cargo}>
+                                {cargo}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <h3 className="text-lg font-semibold text-gray-900 mt-6">
+                      Equipe do Projeto (Opcional)
                     </h3>
                     <Card className="p-4 bg-gray-50">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -938,6 +1080,11 @@ function EFPreview({
           <p className="text-gray-600 mt-2">
             {efRefinada.informacoes_basicas.descricao}
           </p>
+          {efRefinada.informacoes_basicas.descricao_resumida && (
+            <p className="text-sm text-gray-500 mt-2 italic">
+              {efRefinada.informacoes_basicas.descricao_resumida}
+            </p>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
             <div>
               <p className="text-gray-600">Versão</p>
@@ -956,6 +1103,14 @@ function EFPreview({
               <p className="font-semibold">{efRefinada.informacoes_basicas.empresa}</p>
             </div>
           </div>
+          {efRefinada.consultor && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-gray-600">Consultor Responsável</p>
+              <p className="font-semibold">
+                {efRefinada.consultor.nome} - {efRefinada.consultor.cargo}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Visão Geral */}
@@ -1029,10 +1184,10 @@ function EFPreview({
           {isProcessing ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Salvando...
+              Gerando DOCX...
             </>
           ) : (
-            "Baixar e Salvar"
+            "Baixar DOCX e Salvar"
           )}
         </Button>
       </div>

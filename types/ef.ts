@@ -54,6 +54,7 @@ export interface EFRefinada {
     versao: string
     autor: string
     descricao: string
+    descricao_resumida: string // Descrição breve/resumida para a API
     data_criacao: string
     empresa: string
   }
@@ -61,6 +62,11 @@ export interface EFRefinada {
   dados_sap: {
     modulo: string
     tipo_programa: string
+  }
+
+  consultor: {
+    nome: string
+    cargo: string
   }
 
   equipe: Array<{
@@ -116,6 +122,9 @@ export interface EFFormData {
   data_criacao: string
   empresa: string
   tipo_programa: string
+
+  consultor_nome: string
+  consultor_cargo: string
 
   equipe: MembroEquipe[]
 

@@ -191,7 +191,7 @@ export function CriacaoEF() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-geo-accent rounded-full" />
-                  <span>Exportação em PDF</span>
+                  <span>Download em DOCX</span>
                 </div>
               </div>
             </div>
@@ -257,7 +257,7 @@ export function CriacaoEF() {
                   Baixe e salve
                 </h4>
                 <p className="text-sm text-gray-600">
-                  Revise o resultado, baixe em PDF e salve no banco de dados para
+                  Revise o resultado, baixe em DOCX e salve no banco de dados para
                   consulta futura.
                 </p>
               </div>
