@@ -106,7 +106,7 @@ ${
 Agora ajude o usuário com suas dúvidas SAP!`
 }
 
-// Função para validar se a pergunta está no escopo SAP
+
 export function validarEscopoSAP(mensagem: string): {
   isValid: boolean
   reason?: string

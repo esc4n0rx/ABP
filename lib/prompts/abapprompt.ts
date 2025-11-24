@@ -439,19 +439,73 @@ export function removerThinkingBlocks(texto: string): string {
   return resultado
 }
 
+// Escapa newlines literais dentro de strings JSON
+export function escaparNewlinesEmStrings(jsonString: string): string {
+  if (!jsonString) return '{}'
+
+  let resultado = ''
+  let dentroString = false
+  let i = 0
+
+  while (i < jsonString.length) {
+    const char = jsonString[i]
+    const nextChar = jsonString[i + 1]
+
+    // Detecta escape sequences existentes
+    if (char === '\\' && dentroString) {
+      // Já é um escape, mantém como está
+      resultado += char + (nextChar || '')
+      i += 2
+      continue
+    }
+
+    // Detecta início/fim de string
+    if (char === '"') {
+      dentroString = !dentroString
+      resultado += char
+      i++
+      continue
+    }
+
+    // Se estamos dentro de uma string, escapa newlines literais
+    if (dentroString) {
+      if (char === '\n') {
+        resultado += '\\n'
+        i++
+        continue
+      }
+      if (char === '\r') {
+        resultado += '\\r'
+        i++
+        continue
+      }
+      if (char === '\t') {
+        resultado += '\\t'
+        i++
+        continue
+      }
+    }
+
+    resultado += char
+    i++
+  }
+
+  return resultado
+}
+
 // Sanitiza JSON removendo caracteres de controle inválidos
 export function sanitizarJSON(jsonString: string): string {
   if (!jsonString) return '{}'
 
-  // Remove caracteres de controle inválidos, mas preserva \n, \r, \t quando já escapados
-  let sanitizado = jsonString
+  // Primeiro, escapa newlines literais dentro de strings
+  let sanitizado = escaparNewlinesEmStrings(jsonString)
+
+  // Remove caracteres de controle inválidos restantes (fora de strings)
+  sanitizado = sanitizado
     // Remove caracteres de controle ASCII 0-31 exceto \n (10), \r (13), \t (9)
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
     // Remove caracteres Unicode de controle problemáticos
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
-    // Normaliza quebras de linha
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
 
   return sanitizado
 }
@@ -483,18 +537,44 @@ export function extrairJSON(texto: string): string {
     }
   }
 
-  // Tentativa 2: Procura por { e } balanceados
+  // Tentativa 2: Procura por { e } balanceados (considerando strings)
   let braceCount = 0
   let startIndex = -1
   let endIndex = -1
+  let insideString = false
+  let escapeNext = false
 
   for (let i = 0; i < textoLimpo.length; i++) {
-    if (textoLimpo[i] === '{') {
+    const char = textoLimpo[i]
+
+    // Trata caracteres de escape
+    if (escapeNext) {
+      escapeNext = false
+      continue
+    }
+
+    if (char === '\\') {
+      escapeNext = true
+      continue
+    }
+
+    // Trata strings (ignora chaves dentro de strings)
+    if (char === '"') {
+      insideString = !insideString
+      continue
+    }
+
+    if (insideString) {
+      continue
+    }
+
+    // Conta chaves apenas fora de strings
+    if (char === '{') {
       if (braceCount === 0) {
         startIndex = i
       }
       braceCount++
-    } else if (textoLimpo[i] === '}') {
+    } else if (char === '}') {
       braceCount--
       if (braceCount === 0 && startIndex !== -1) {
         endIndex = i
@@ -579,13 +659,11 @@ export function validarRespostaABAP(resposta: string): {
   try {
     json = JSON.parse(jsonString)
   } catch (e: any) {
-    // Tenta uma última sanitização mais agressiva
+    // Última tentativa: tenta extrair e sanitizar JSON novamente
     try {
-      // Remove espaços e quebras extras
-      const jsonAgressivo = jsonString
-        .replace(/\s+/g, ' ')
-        .trim()
-      json = JSON.parse(jsonAgressivo)
+      const jsonReextraido = extrairJSON(jsonString)
+      const jsonSanitizado = sanitizarJSON(jsonReextraido)
+      json = JSON.parse(jsonSanitizado)
     } catch (e2: any) {
       return {
         isValid: false,

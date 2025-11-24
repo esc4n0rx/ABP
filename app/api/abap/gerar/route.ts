@@ -144,8 +144,8 @@ export async function POST(request: NextRequest) {
           const jsonLimpo = extrairJSON(respostaLimpa)
           logger.logJSONExtraido(jsonLimpo)
 
-          // Valida a resposta
-          const validacao = validarRespostaABAP(respostaCompleta)
+          // Valida a resposta (usa respostaLimpa para evitar problemas com thinking blocks)
+          const validacao = validarRespostaABAP(respostaLimpa)
 
           if (!validacao.isValid) {
             logger.logErroValidacao(validacao.error || 'Erro desconhecido', respostaCompleta)

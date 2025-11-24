@@ -39,7 +39,11 @@ export default function LoginPage() {
       if (isRegisterMode) {
         if (formData.password !== formData.confirmPassword) {
           setError('As senhas não coincidem');
-          setIsLoading(false);
+          return;
+        }
+
+        if (formData.password.length < 6) {
+          setError('A senha deve ter pelo menos 6 caracteres');
           return;
         }
 
@@ -52,7 +56,8 @@ export default function LoginPage() {
 
         if (result.error) {
           setError(result.error);
-        } else {
+        } else if (result.success) {
+          // Navegação centralizada aqui após sucesso
           router.push('/dashboard');
         }
       } else {
@@ -63,12 +68,14 @@ export default function LoginPage() {
 
         if (result.error) {
           setError(result.error);
-        } else {
+        } else if (result.success) {
+          // Navegação centralizada aqui após sucesso
           router.push('/dashboard');
         }
       }
     } catch (error: any) {
-      setError(error.message);
+      setError(error?.message || 'Ocorreu um erro. Tente novamente.');
+      console.error('Erro no formulário:', error);
     } finally {
       setIsLoading(false);
     }
