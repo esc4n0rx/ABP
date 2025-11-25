@@ -12,17 +12,8 @@ export function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
   clientInstance = createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      // Garante persistência consistente
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      storageKey: 'supabase.auth.token',
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      // Reduz problemas de race condition em múltiplas abas
-      flowType: 'pkce',
-    },
-    // Melhora resiliência de rede
+    // REMOVIDO: Configuração manual de auth/storage. 
+    // Agora usamos o padrão (Cookies) para que o Server Component consiga ler a sessão.
     global: {
       headers: {
         'x-client-info': 'supabase-js-web',
@@ -36,7 +27,7 @@ export function createClient() {
 // Função auxiliar para limpar cache quando necessário
 export function clearSupabaseCache() {
   if (typeof window !== 'undefined') {
-    // Remove possíveis chaves corrompidas
+    // Remove possíveis chaves antigas do localStorage para evitar conflitos
     const keysToRemove = []
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i)
@@ -45,6 +36,13 @@ export function clearSupabaseCache() {
       }
     }
     keysToRemove.forEach(key => window.localStorage.removeItem(key))
+    
+    // Limpa cookies do Supabase também (padrão sb-*-auth-token)
+    document.cookie.split(";").forEach((c) => {
+      if(c.trim().startsWith("sb-")) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      }
+    });
   }
   clientInstance = null
 }
