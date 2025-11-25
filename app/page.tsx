@@ -57,7 +57,7 @@ export default function LoginPage() {
         if (result.error) {
           setError(result.error);
         } else if (result.success) {
-          // Navegação centralizada aqui após sucesso
+          router.refresh(); 
           router.push('/dashboard');
         }
       } else {
@@ -69,7 +69,7 @@ export default function LoginPage() {
         if (result.error) {
           setError(result.error);
         } else if (result.success) {
-          // Navegação centralizada aqui após sucesso
+          router.refresh();
           router.push('/dashboard');
         }
       }
