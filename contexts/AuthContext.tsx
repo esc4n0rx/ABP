@@ -230,7 +230,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut()
     setUser(null)
-    router.push('/login')
+    // Correção: Redirecionar para a raiz '/'
+    router.push('/')
   }
 
   return (
