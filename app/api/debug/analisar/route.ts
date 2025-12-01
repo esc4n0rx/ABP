@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
-import Groq from "groq-sdk"
 import { gerarPromptDebug, validarRespostaDebug } from "@/lib/prompts/debugprompt"
 import { AnaliseDebugRequest } from "@/types/debug"
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY,
-})
+import { createProviderManager } from "@/lib/providers/provider-manager"
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,21 +61,25 @@ export async function POST(request: NextRequest) {
 
     console.log(`[DEBUG API] Iniciando análise ${dados.tipo}`)
 
-    // Chama API Groq
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
+    // Cria provider manager para o usuário
+    const providerManager = await createProviderManager(user.id)
+
+    // Chama a IA usando o provider configurado
+    const response = await providerManager.generateContent(
+      [
         {
           role: "user",
           content: systemPrompt,
         },
       ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.3,
-      max_completion_tokens: 4000,
-      top_p: 0.9,
-    })
+      {
+        temperature: 0.3,
+        maxTokens: 4000,
+        topP: 0.9,
+      }
+    )
 
-    const respostaIA = chatCompletion.choices[0]?.message?.content || ""
+    const respostaIA = response.content || ""
 
     if (!respostaIA) {
       return NextResponse.json(

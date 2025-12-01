@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { refinarEspecificacaoFuncional } from '@/lib/providers/groq'
 import { EFFormData } from '@/types/ef'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerSupabaseClient()
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Não autenticado' },
+        { status: 401 }
+      )
+    }
+
     const formData: EFFormData = await request.json()
 
     if (!formData.titulo || !formData.modulo_sap || !formData.empresa) {
@@ -13,7 +28,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const resultado = await refinarEspecificacaoFuncional(formData)
+    const resultado = await refinarEspecificacaoFuncional(formData, user.id)
 
     if (!resultado.success) {
       return NextResponse.json(

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import toast from "react-hot-toast"
 import { UserProfile } from "@/types/profile"
-import { create } from "domain"
+import { ProvidersSettings } from "@/components/settings/ProvidersSettings"
 
 function Modal({
   isOpen,
@@ -503,79 +503,7 @@ export function Header() {
         title="Configurações do Sistema"
         size="large"
       >
-        <div className="flex flex-col items-center justify-center py-16 space-y-6">
-          {/* Animação de Construção */}
-          <motion.div
-            animate={{
-              rotate: [0, 10, -10, 10, 0],
-              scale: [1, 1.1, 1, 1.1, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <Construction size={120} className="text-yellow-500" />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center space-y-3"
-          >
-            <h3 className="text-2xl font-bold text-gray-900">Em Construção</h3>
-            <p className="text-gray-600 max-w-md">
-              Esta funcionalidade está sendo desenvolvida e estará disponível em breve.
-            </p>
-          </motion.div>
-
-          {/* Elementos decorativos animados */}
-          <div className="flex gap-4 mt-8">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                animate={{
-                  y: [0, -20, 0],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  delay: i * 0.2,
-                  ease: "easeInOut",
-                }}
-                className="w-4 h-4 bg-geo-primary rounded-full"
-              />
-            ))}
-          </div>
-
-          {/* Card com prévia das futuras configurações */}
-          <div className="w-full mt-8 space-y-3">
-            <p className="text-sm font-semibold text-gray-700 text-center mb-4">
-              Funcionalidades Planejadas:
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { icon: Settings, label: "Preferências Gerais" },
-                { icon: Bell, label: "Notificações" },
-                { icon: Wrench, label: "Integrações" },
-                { icon: User, label: "Segurança e Privacidade" },
-              ].map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 0.5, scale: 1 }}
-                  transition={{ delay: 0.3 + idx * 0.1 }}
-                  className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
-                >
-                  <item.icon size={20} className="text-gray-400" />
-                  <span className="text-sm text-gray-600">{item.label}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ProvidersSettings />
       </Modal>
     </>
   )

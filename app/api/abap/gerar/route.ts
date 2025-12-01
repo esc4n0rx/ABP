@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import Groq from 'groq-sdk'
 import {
   gerarPromptABAP,
   gerarPromptRefinamentoABAP,
@@ -11,10 +10,7 @@ import {
 } from '@/lib/prompts/abapprompt'
 import { AbapFormData } from '@/types/abap'
 import { logger } from '@/lib/utils/logger'
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY,
-})
+import { createProviderManager } from '@/lib/providers/provider-manager'
 
 interface GerarAbapRequest {
   formData: AbapFormData
@@ -94,27 +90,27 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Chama API Groq com stream
-          const chatCompletion = await groq.chat.completions.create({
-            messages: [
+          // Cria provider manager para o usuário
+          const providerManager = await createProviderManager(user.id)
+
+          let respostaCompleta = ''
+          let bufferTemporario = ''
+
+          // Stream dos chunks usando o provider configurado
+          for await (const chunk of providerManager.generateContentStream(
+            [
               {
                 role: 'user',
                 content: systemPrompt,
               },
             ],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.3, // Temperatura baixa para consistência de código
-            max_completion_tokens: 8000, // Código pode ser longo
-            top_p: 0.9,
-            stream: true,
-          })
-
-          let respostaCompleta = ''
-          let bufferTemporario = ''
-
-          // Stream dos chunks
-          for await (const chunk of chatCompletion) {
-            const content = chunk.choices[0]?.delta?.content || ''
+            {
+              temperature: 0.3,
+              maxTokens: 8000,
+              topP: 0.9,
+            }
+          )) {
+            const content = chunk.content || ''
 
             if (content) {
               respostaCompleta += content

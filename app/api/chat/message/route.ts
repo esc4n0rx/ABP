@@ -1,16 +1,12 @@
 import { NextRequest } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import Groq from 'groq-sdk'
 import {
   formatarHistorico,
   removerThinkingBlocks,
   validarEscopoSAP,
 } from '@/lib/prompts/chatprompt'
 import { ChatRequest } from '@/types/chat'
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY,
-})
+import { createProviderManager } from '@/lib/providers/provider-manager'
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder()
@@ -81,21 +77,21 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Chama API Groq com stream
-          const chatCompletion = await groq.chat.completions.create({
-            messages: mensagensFormatadas,
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.7,
-            max_completion_tokens: 4096,
-            top_p: 0.9,
-            stream: true,
-          })
+          // Cria provider manager para o usuário
+          const providerManager = await createProviderManager(session.user.id)
 
           let respostaCompleta = ''
 
-          // Stream dos chunks
-          for await (const chunk of chatCompletion) {
-            const content = chunk.choices[0]?.delta?.content || ''
+          // Stream dos chunks usando o provider configurado
+          for await (const chunk of providerManager.generateContentStream(
+            mensagensFormatadas,
+            {
+              temperature: 0.7,
+              maxTokens: 4096,
+              topP: 0.9,
+            }
+          )) {
+            const content = chunk.content || ''
 
             if (content) {
               respostaCompleta += content

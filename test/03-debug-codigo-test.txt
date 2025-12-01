@@ -1,0 +1,445 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    CENÁRIOS DE TESTE - DEBUG DE CÓDIGO
+                  (Análise de Erros: SMQ2, ABAP, Cenários)
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 OBJETIVO: Testar a análise e resolução de problemas SAP com diferentes providers
+🎯 CRITÉRIOS DE SUCESSO: Solução deve identificar causa raiz, propor correção e prevenir reincidência
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 1: ANÁLISE SMQ2 - ERRO DE qRFC
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE ANÁLISE: SMQ2
+
+DADOS DE ENTRADA:
+-----------------
+Nome da Função: Z_RFC_CREATE_SALES_ORDER
+Nome da Fila: ZQUEUE_SALES_ORDERS
+Quando Aconteceu: Após implementação de nova regra de validação de crédito
+
+Detalhes da Ocorrência:
+A função RFC Z_RFC_CREATE_SALES_ORDER está falhando na fila SMQ2 com a seguinte
+mensagem de erro:
+
+"MESSAGE_TYPE_X: RFC_ERROR_SYSTEM_FAILURE - Time limit exceeded"
+
+A fila ZQUEUE_SALES_ORDERS acumula mais de 5.000 registros pendentes desde ontem.
+O erro começou após o deploy de uma atualização que incluiu validação adicional
+de limite de crédito. A função era executada sem problemas antes da mudança.
+
+Contexto Adicional:
+- Volume de chamadas: ~200 pedidos/hora
+- Tempo de processamento antes da mudança: ~1 segundo
+- Timeout configurado: 60 segundos
+- Ambiente: Produção
+- Versão SAP: S/4HANA 2021
+- A função faz SELECT em KNKK, BSID e tabela customizada ZTAB_CREDIT_LIMIT
+
+Dados Adicionais:
+- ST22: Nenhum dump
+- SM21: Apenas avisos de timeout
+- Último sucesso: 30/11/2025 23:45
+- Primeira falha: 01/12/2025 00:15
+
+VALIDAÇÕES ESPERADAS NA ANÁLISE:
+✓ Identificação da causa raiz (performance/timeout)
+✓ Análise de performance do código novo
+✓ Solução com código otimizado
+✓ Passos para corrigir a fila
+✓ Recomendações de índices de BD
+✓ Estratégia para reprocessar registros
+✓ Monitoramento sugerido
+✓ Nível de criticidade correto (ALTA/CRÍTICA)
+✓ Tempo estimado de resolução realista
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-5-haiku-20241022)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 2: ANÁLISE ABAP - DUMP DE MEMÓRIA
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE ANÁLISE: ABAP
+
+DADOS DE ENTRADA:
+-----------------
+Nome do Programa: ZREP_INVOICE_REPORT
+Tipo de Objeto: REPORT
+Descrição do Problema: Programa apresenta dump TSV_TNEW_PAGE_ALLOC_FAILED
+
+Código ABAP:
+```abap
+*&---------------------------------------------------------------------*
+*& Report ZREP_INVOICE_REPORT
+*&---------------------------------------------------------------------*
+REPORT zrep_invoice_report.
+
+TABLES: vbrk, vbrp, kna1.
+
+TYPES: BEGIN OF ty_invoice,
+         vbeln TYPE vbrk-vbeln,
+         fkdat TYPE vbrk-fkdat,
+         kunag TYPE vbrk-kunag,
+         name1 TYPE kna1-name1,
+         posnr TYPE vbrp-posnr,
+         matnr TYPE vbrp-matnr,
+         fkimg TYPE vbrp-fkimg,
+         netwr TYPE vbrp-netwr,
+       END OF ty_invoice.
+
+DATA: gt_invoices TYPE TABLE OF ty_invoice,
+      gs_invoice  TYPE ty_invoice,
+      gt_output   TYPE TABLE OF ty_invoice.
+
+SELECT-OPTIONS: s_fkdat FOR vbrk-fkdat OBLIGATORY.
+
+START-OF-SELECTION.
+
+  " Buscar todas as faturas
+  SELECT vbrk~vbeln vbrk~fkdat vbrk~kunag kna1~name1
+         vbrp~posnr vbrp~matnr vbrp~fkimg vbrp~netwr
+    FROM vbrk
+    INNER JOIN vbrp ON vbrk~vbeln = vbrp~vbeln
+    INNER JOIN kna1 ON vbrk~kunag = kna1~kunnr
+    INTO TABLE gt_invoices
+    WHERE vbrk~fkdat IN s_fkdat.
+
+  " Processar dados
+  LOOP AT gt_invoices INTO gs_invoice.
+    " Cálculos complexos
+    gs_invoice-netwr = gs_invoice-netwr * '1.1'.
+    APPEND gs_invoice TO gt_output.
+  ENDLOOP.
+
+  " Exibir resultados
+  LOOP AT gt_output INTO gs_invoice.
+    WRITE: / gs_invoice-vbeln, gs_invoice-fkdat, gs_invoice-kunag,
+             gs_invoice-name1, gs_invoice-matnr, gs_invoice-netwr.
+  ENDLOOP.
+```
+
+Mensagem de Erro:
+TSV_TNEW_PAGE_ALLOC_FAILED - "No more storage space available for extending
+an internal table"
+
+Dump (ST22):
+- Runtime Error: TSV_TNEW_PAGE_ALLOC_FAILED
+- Program: ZREP_INVOICE_REPORT
+- Memory Used: 2GB (máximo permitido)
+- Table Size: gt_invoices with 15.000.000 lines
+- Ocorrência: Durante SELECT
+- Seleção: Período de 5 anos (01/01/2020 a 31/12/2024)
+
+VALIDAÇÕES ESPERADAS NA ANÁLISE:
+✓ Identificação do problema de memória
+✓ Análise do SELECT (falta de PACKAGE SIZE)
+✓ Código corrigido com pacotes
+✓ Otimizações adicionais (WHERE clause)
+✓ Recomendação de índices
+✓ Alternativa com ALV
+✓ Boas práticas de performance
+✓ Prevenção (validação de período)
+✓ Nível de criticidade MÉDIA
+✓ Código executável e testável
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 3: ANÁLISE ABAP - ERRO DE AUTORIZAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE ANÁLISE: ABAP
+
+DADOS DE ENTRADA:
+-----------------
+Nome do Programa: ZCL_VENDOR_MANAGER
+Tipo de Objeto: CLASS
+Descrição do Problema: Usuários não conseguem executar método de atualização
+
+Código ABAP:
+```abap
+CLASS zcl_vendor_manager DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC.
+
+  PUBLIC SECTION.
+    METHODS update_vendor
+      IMPORTING
+        iv_lifnr TYPE lifnr
+        iv_name1 TYPE name1_gp
+      RAISING
+        cx_vendor_not_found.
+
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+
+ENDCLASS.
+
+CLASS zcl_vendor_manager IMPLEMENTATION.
+
+  METHOD update_vendor.
+    DATA: ls_lfa1 TYPE lfa1.
+
+    " Buscar fornecedor
+    SELECT SINGLE * FROM lfa1
+      INTO ls_lfa1
+      WHERE lifnr = iv_lifnr.
+
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE cx_vendor_not_found.
+    ENDIF.
+
+    " Atualizar nome
+    ls_lfa1-name1 = iv_name1.
+
+    UPDATE lfa1 FROM ls_lfa1.
+
+    IF sy-subrc <> 0.
+      " Erro na atualização
+      MESSAGE 'Erro ao atualizar fornecedor' TYPE 'E'.
+    ENDIF.
+
+    COMMIT WORK.
+
+  ENDMETHOD.
+
+ENDCLASS.
+```
+
+Mensagem de Erro:
+Usuários recebem mensagem:
+"You are not authorized to change master data"
+"Authority check for object K_LFA1 failed"
+
+Contexto:
+- Classe chamada por programa customizado
+- Apenas usuários do perfil SAP_ALL conseguem executar
+- Necessário permitir para perfil Z_VENDOR_EDITOR
+- Não há verificação de autorização no código
+- Erro ocorre no UPDATE da LFA1
+
+VALIDAÇÕES ESPERADAS NA ANÁLISE:
+✓ Identificação da falta de AUTHORITY-CHECK
+✓ Código corrigido com verificação
+✓ Objeto de autorização correto (K_LFA1)
+✓ Tratamento de exceção adequado
+✓ Mensagem ao usuário clara
+✓ Documentação de perfil necessário
+✓ Configuração PFCG sugerida
+✓ Boas práticas de segurança
+✓ Nível de criticidade ALTA
+✓ Transações úteis listadas (SU53, PFCG)
+
+PROVIDERS A TESTAR:
+□ Groq (openai/gpt-oss-120b)
+□ Gemini (gemini-1.5-flash)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-7-sonnet-20250219)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 4: ANÁLISE DE CENÁRIO - ERRO NA MIGO
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE ANÁLISE: CENARIO
+
+DADOS DE ENTRADA:
+-----------------
+Transação: MIGO
+Descrição do Cenário: Entrada de Mercadoria com Referência a Pedido de Compra
+
+Descrição do Problema:
+Ao tentar fazer entrada de mercadoria (movimento 101) com referência ao pedido
+4500012345, o sistema apresenta erro e não permite o lançamento.
+
+Mensagem de Erro:
+"Entry 000001 is locked by user JOHNDOE in program SAPMM07M"
+"Material document not yet created"
+"Update was terminated"
+
+Passos para Reprodução:
+1. Acessar transação MIGO
+2. Selecionar "Entrada de Mercadoria" e "Pedido de Compra"
+3. Informar pedido: 4500012345
+4. Preencher quantidade: 100 UN
+5. Informar depósito: 0001
+6. Verificar documento: OK
+7. Clicar em "Lançar"
+8. Sistema apresenta erro
+
+Dados de Entrada:
+- Pedido de Compra: 4500012345
+- Material: 100001
+- Quantidade: 100 UN
+- Depósito: 0001
+- Centro: 1000
+- Movimento: 101
+- Usuário: USERTEST
+- Data: 01/12/2025
+
+Contexto Adicional:
+- Erro ocorre de forma intermitente
+- Às vezes funciona, às vezes não
+- Mais comum em horários de pico (9h-11h)
+- Outros usuários também reportaram
+- Pedido está aprovado e liberado
+- Material tem estoque disponível
+- Nenhuma customização em MIGO
+
+VALIDAÇÕES ESPERADAS NA ANÁLISE:
+✓ Identificação de lock/bloqueio
+✓ Análise de update terminado
+✓ Solução para desbloqueio (SM12, SM13)
+✓ Verificação de erro de update
+✓ Passos detalhados de resolução
+✓ Verificação de BAPIs relacionadas
+✓ Análise de concorrência
+✓ Prevenção de locks
+✓ Transações úteis (SM12, SM13, SM21)
+✓ Notas SAP relacionadas (se houver)
+✓ Nível de criticidade ALTA
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 5: ANÁLISE DE CENÁRIO - ERRO CUSTOMIZADO EM TRANSAÇÃO Z
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE ANÁLISE: CENARIO
+
+DADOS DE ENTRADA:
+-----------------
+Transação: ZMM_PRICE_UPDATE
+Descrição do Cenário: Atualização em massa de preços de materiais
+
+Descrição do Problema:
+Transação customizada ZMM_PRICE_UPDATE falha ao tentar atualizar preços de
+materiais em lote. O processo carrega arquivo Excel com 5.000 materiais mas
+atualiza apenas os primeiros 50.
+
+Mensagem de Erro:
+"Error in BAPI_MATERIAL_MAINTAINDATA: Material 100234 is locked"
+"Price update failed for 4950 materials"
+"Check error log in table ZTAB_PRICE_LOG"
+
+Programa Customizado: ZMM_PRICE_UPDATE_BATCH
+
+Passos para Reprodução:
+1. Acessar transação ZMM_PRICE_UPDATE
+2. Fazer upload de arquivo Excel com materiais e preços
+3. Validar arquivo: OK (5.000 linhas)
+4. Clicar em "Processar Atualização"
+5. Sistema processa ~1 minuto
+6. Exibe mensagem de erro
+7. Apenas 50 primeiros materiais foram atualizados
+
+Dados de Entrada:
+- Arquivo: price_update_2025.xlsx
+- Total de materiais: 5.000
+- Formato: MATNR | WERKS | PRICE | CURRENCY
+- Centro: 1000
+- Tipo de preço: V (Preço de venda)
+- Usuário: PRICING_ADMIN
+
+Contexto Adicional:
+- Programa usa BAPI_MATERIAL_MAINTAINDATA
+- Não há COMMIT WORK no código
+- Processo não é paralelo
+- Timeout em 30 segundos
+- Erro começou após upgrade para S/4HANA
+- No ECC6 funcionava normalmente
+
+VALIDAÇÕES ESPERADAS NA ANÁLISE:
+✓ Identificação de falta de COMMIT
+✓ Análise de performance (sequencial)
+✓ Código corrigido com COMMIT e pacotes
+✓ Implementação de parallel processing
+✓ Tratamento de locks
+✓ Log de erros robusto
+✓ Rollback strategy
+✓ Reprocessamento de falhas
+✓ Monitoramento de progresso
+✓ Estimativa de tempo de processamento
+✓ Nível de criticidade MÉDIA
+✓ Código otimizado funcional
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITÉRIOS DE AVALIAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+Para cada cenário, avaliar:
+
+1. IDENTIFICAÇÃO DA CAUSA RAIZ (0-10 pontos)
+   □ Causa corretamente identificada
+   □ Análise profunda e precisa
+   □ Contexto considerado
+
+2. QUALIDADE DA SOLUÇÃO (0-10 pontos)
+   □ Solução resolve o problema
+   □ Código corrigido funciona
+   □ Passos claros e executáveis
+
+3. CÓDIGO DE CORREÇÃO (0-10 pontos)
+   □ Sintaxe correta
+   □ Implementável
+   □ Boas práticas seguidas
+
+4. PREVENÇÃO (0-10 pontos)
+   □ Medidas preventivas sugeridas
+   □ Monitoramento recomendado
+   □ Boas práticas documentadas
+
+5. RECURSOS ADICIONAIS (0-10 pontos)
+   □ Notas SAP úteis
+   □ Transações relevantes
+   □ Documentação adicional
+
+6. CRITICIDADE E TEMPO (0-10 pontos)
+   □ Nível de criticidade correto
+   □ Tempo estimado realista
+   □ Priorização adequada
+
+PONTUAÇÃO TOTAL: ____ / 60 pontos
+
+═══════════════════════════════════════════════════════════════════════════════
+OBSERVAÇÕES E BUGS ENCONTRADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Provider: _________________
+Data do Teste: ___/___/___
+Testador: _________________
+
+Cenário Testado: _________________
+
+Causa Raiz Identificada Corretamente: □ Sim  □ Não
+Solução Resolve o Problema: □ Sim  □ Parcialmente  □ Não
+Código de Correção Funciona: □ Sim  □ Não testado  □ Não
+
+Tempo de Resposta: ________ segundos
+Qualidade Geral: □ Excelente  □ Boa  □ Regular  □ Ruim
+
+Observações:
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+
+═══════════════════════════════════════════════════════════════════════════════

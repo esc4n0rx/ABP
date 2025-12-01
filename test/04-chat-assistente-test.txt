@@ -1,0 +1,400 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    CENÁRIOS DE TESTE - CHAT ASSISTENTE SAP
+                  (Conversas sobre SAP, ABAP, Arquitetura)
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 OBJETIVO: Testar a qualidade das respostas do chat SAP com diferentes providers
+🎯 CRITÉRIOS DE SUCESSO: Respostas precisas, contextualizadas e úteis sobre SAP
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 1: DÚVIDA TÉCNICA - BAPI vs FM
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+Desenvolvimento de integração para criar pedidos de venda automaticamente
+
+HISTÓRICO DA CONVERSA:
+(Primeira mensagem)
+
+MENSAGEM DO USUÁRIO:
+```
+Estou desenvolvendo uma integração que precisa criar pedidos de venda no SAP
+automaticamente. Devo usar uma BAPI ou criar meu próprio Function Module?
+Quais as vantagens e desvantagens de cada abordagem?
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Explicação clara de BAPI vs FM customizado
+✓ Vantagens de usar BAPI (BAPI_SALESORDER_CREATEFROMDAT2)
+  - Validações automáticas
+  - Commits e rollbacks gerenciados
+  - Suporte SAP
+  - Menos código de validação
+✓ Quando usar FM customizado
+  - Lógica muito específica
+  - Performance crítica
+  - Validações adicionais complexas
+✓ Recomendação: Usar BAPI como primeira opção
+✓ Exemplo de código ou referência
+✓ Considerações de performance
+✓ Boas práticas mencionadas
+✓ Tom profissional e educativo
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-5-haiku-20241022)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 2: CONTINUAÇÃO DE CONVERSA - ERRO EM BAPI
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+Desenvolvimento de integração para criar pedidos de venda automaticamente
+
+HISTÓRICO DA CONVERSA:
+```
+Usuário: Estou desenvolvendo uma integração que precisa criar pedidos de venda
+no SAP automaticamente. Devo usar uma BAPI ou criar meu próprio FM?
+
+Assistente: [Resposta explicando BAPI vs FM]
+
+Usuário: Ok, vou usar a BAPI_SALESORDER_CREATEFROMDAT2. Mas estou recebendo
+este erro: "Item 000010: Material 100001 is not defined for sales org. 1000/10/00"
+
+O material existe e está ativo. O que pode estar errado?
+```
+
+MENSAGEM DO USUÁRIO:
+```
+Ok, vou usar a BAPI_SALESORDER_CREATEFROMDAT2. Mas estou recebendo este erro:
+"Item 000010: Material 100001 is not defined for sales org. 1000/10/00"
+
+O material existe e está ativo. O que pode estar errado?
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Referência ao contexto anterior (BAPI)
+✓ Identificação do problema: falta de extensão de vendas
+✓ Explicação de views do material (MM01/MM02)
+  - View básico
+  - View de vendas (Sales: Sales Org 1/2)
+✓ Passo a passo para resolver:
+  1. Verificar extensões (tabela MVKE)
+  2. Estender material para org.vendas (MM01)
+  3. Configurar dados de vendas
+✓ Transações mencionadas: MM01, MM02, MM03
+✓ Campos importantes: VTWEG, SPART
+✓ Validação antes de chamar BAPI
+✓ Código SQL para verificar (SELECT from MVKE)
+✓ Continuidade do diálogo mantida
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 3: ARQUITETURA - MELHOR ABORDAGEM
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+(Novo projeto - sem contexto anterior)
+
+MENSAGEM DO USUÁRIO:
+```
+Estou projetando um sistema que precisa sincronizar pedidos entre SAP e
+e-commerce em tempo real. Pensamos em 3 abordagens:
+
+1. Polling a cada 5 minutos do e-commerce consultando SAP via RFC
+2. Webhook do e-commerce chamando RFC do SAP quando houver novo pedido
+3. Middleware (SAP PI/PO) entre os sistemas
+
+Qual a melhor abordagem? Esperamos volume de 10.000 pedidos/dia.
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Análise de cada abordagem:
+  1. Polling:
+     - Vantagens: simples, desacoplado
+     - Desvantagens: latência, overhead
+  2. Webhook/RFC direto:
+     - Vantagens: tempo real, eficiente
+     - Desvantagens: acoplamento, segurança
+  3. Middleware:
+     - Vantagens: desacoplamento, monitoramento, resiliência
+     - Desvantagens: custo, complexidade
+✓ Recomendação baseada em volume (10k/dia)
+✓ Considerações:
+  - Tempo real crítico?
+  - Budget disponível?
+  - Complexidade de manutenção
+  - Segurança e firewall
+✓ Sugestão de arquitetura híbrida possível
+✓ Ferramentas SAP mencionadas (PI/PO, CPI, APIs)
+✓ Boas práticas de integração
+✓ Questões para refinar recomendação
+
+PROVIDERS A TESTAR:
+□ Groq (openai/gpt-oss-120b)
+□ Gemini (gemini-1.5-flash)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-7-sonnet-20250219)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 4: DEBUGGING - PERFORMANCE
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+Otimização de relatório ALV lento
+
+MENSAGEM DO USUÁRIO:
+```
+Meu relatório ALV está muito lento. Ele busca dados de vendas dos últimos 12
+meses e demora mais de 5 minutos para executar. O código faz:
+
+1. SELECT * FROM vbrk WHERE fkdat IN s_fkdat
+2. LOOP AT lt_vbrk
+3.   SELECT SINGLE * FROM vbrp WHERE vbeln = lt_vbrk-vbeln
+4.   SELECT SINGLE * FROM kna1 WHERE kunnr = lt_vbrk-kunag
+5. ENDLOOP
+6. Exibe ALV
+
+Como posso otimizar isso? Tem cerca de 50.000 faturas por ano.
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Identificação dos problemas:
+  - SELECT * (todos os campos)
+  - SELECT dentro de LOOP
+  - NESTED SELECTS
+✓ Soluções propostas:
+  1. SELECT apenas campos necessários
+  2. JOIN em vez de NESTED SELECT
+  3. SELECT com FOR ALL ENTRIES
+  4. Uso de índices apropriados
+✓ Código otimizado exemplo
+✓ Estimativa de melhoria (5min → <30seg)
+✓ Ferramentas de análise: SE30, ST05, SAT
+✓ Boas práticas de performance:
+  - Evitar SELECT *
+  - Evitar NESTED SELECT
+  - Usar WHERE clause eficiente
+  - Considerar índices secundários
+✓ Validação de dados antes de processar
+✓ Alternativas (CDS Views, AMDP)
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 5: CONCEITO - S/4HANA MIGRATION
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+(Novo projeto - planejamento de migração)
+
+MENSAGEM DO USUÁRIO:
+```
+Nossa empresa está planejando migrar de SAP ECC 6.0 para S/4HANA. Temos cerca
+de 2.000 programas customizados (Z/Y). Quais os principais pontos de atenção
+na migração? O que vai quebrar com certeza?
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Principais mudanças S/4HANA:
+  - Mudança de tabelas (BSEG → ACDOCA)
+  - Eliminação de tabelas obsoletas
+  - Nova sintaxe ABAP 7.5+
+  - CDS Views obrigatórias para alguns casos
+✓ Pontos de atenção:
+  1. Código que acessa BSEG diretamente
+  2. SELECTs em tabelas obsoletas
+  3. Campos removidos
+  4. Mudanças em BAPIs
+  5. Custom code que usa tabelas internas OCCURS
+✓ Ferramentas de análise:
+  - ATC (ABAP Test Cockpit)
+  - Custom Code Migration App (Fiori)
+  - Simplification Database
+  - SAP Readiness Check
+✓ Processo recomendado:
+  1. Executar ATC em todos os programas
+  2. Análise de simplification items
+  3. Priorizar correções críticas
+  4. Testar em sandbox S/4HANA
+  5. Refatorar código problemático
+✓ Estimativa de esforço (baseado em 2k programas)
+✓ Recursos SAP úteis (notas, guias)
+✓ Recomendação de consultoria especializada
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 6: CÓDIGO EXEMPLO - VALIDAÇÃO DE CRÉDITO
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+Desenvolvimento de validação customizada
+
+MENSAGEM DO USUÁRIO:
+```
+Preciso criar uma validação de crédito customizada no enhancement do VA01.
+A regra é:
+
+- Se valor do pedido > limite disponível → ERRO e não permite salvar
+- Limite disponível = limite_cadastrado - títulos_abertos - pedidos_aberto
+
+Pode me dar um exemplo de código ABAP para isso?
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Enhancement point correto sugerido
+✓ Código ABAP funcional com:
+  - SELECT para buscar limite (KNKK)
+  - SELECT para títulos abertos (BSID)
+  - SELECT para pedidos em aberto (VBAK/VBAP)
+  - Cálculo de limite disponível
+  - Validação e mensagem de erro
+  - Uso correto de MESSAGE com tipo 'E'
+✓ Tratamento de casos especiais:
+  - Cliente sem limite
+  - Valores nulos
+  - Performance considerations
+✓ Comentários no código
+✓ Sugestões de melhoria:
+  - Cache de dados
+  - Validação assíncrona
+  - Log de validações
+✓ Transações para configurar enhancement
+✓ Teste sugerido
+✓ Código compilável e executável
+
+PROVIDERS A TESTAR:
+□ Groq (openai/gpt-oss-120b)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 7: TROUBLESHOOTING - ERRO DE AUTORIZAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXTO DO PROJETO:
+Resolução de problema de autorização
+
+MENSAGEM DO USUÁRIO:
+```
+Usuários estão reclamando que não conseguem executar a transação ZMM_VENDOR.
+Eles recebem mensagem "No authorization to display". Como descubro qual
+autorização está faltando e como adiciono no perfil deles?
+```
+
+VALIDAÇÕES ESPERADAS NA RESPOSTA:
+✓ Passo a passo para identificar:
+  1. Pedir usuário executar e receber erro
+  2. Usuário executar SU53 imediatamente
+  3. Analisar objeto de autorização faltando
+✓ Explicação de objetos de autorização
+✓ Como adicionar no perfil:
+  1. Acessar PFCG
+  2. Selecionar perfil do usuário
+  3. Autorizations → Change
+  4. Adicionar objeto faltando
+  5. Generate profile
+  6. Atribuir ao usuário (se necessário)
+✓ Alternativas:
+  - Criar novo perfil específico
+  - Adicionar em perfil composto
+  - Transaction code authorization
+✓ Boas práticas:
+  - Princípio do menor privilégio
+  - Documentar mudanças
+  - Testar antes de aplicar em produção
+✓ Transações úteis: SU53, PFCG, SU01, SU24
+✓ Considerações de auditoria
+✓ Segregação de funções (SoD)
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-flash)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-7-sonnet-20250219)
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITÉRIOS DE AVALIAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+Para cada cenário, avaliar:
+
+1. PRECISÃO TÉCNICA (0-10 pontos)
+   □ Informações corretas sobre SAP
+   □ Conceitos explicados adequadamente
+   □ Detalhes técnicos precisos
+
+2. COMPLETUDE DA RESPOSTA (0-10 pontos)
+   □ Responde toda a pergunta
+   □ Aborda pontos relacionados
+   □ Informação suficiente para agir
+
+3. CLAREZA E ORGANIZAÇÃO (0-10 pontos)
+   □ Linguagem clara e acessível
+   □ Bem estruturada
+   □ Exemplos quando apropriado
+
+4. CONTEXTO E CONTINUIDADE (0-10 pontos)
+   □ Mantém contexto do projeto
+   □ Referencia mensagens anteriores
+   □ Progressão lógica do diálogo
+
+5. UTILIDADE PRÁTICA (0-10 pontos)
+   □ Código executável (quando aplicável)
+   □ Passos acionáveis
+   □ Recursos úteis mencionados
+
+6. PROFISSIONALISMO (0-10 pontos)
+   □ Tom adequado
+   □ Sem informações incorretas
+   □ Admite limitações quando necessário
+
+PONTUAÇÃO TOTAL: ____ / 60 pontos
+
+═══════════════════════════════════════════════════════════════════════════════
+OBSERVAÇÕES E BUGS ENCONTRADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Provider: _________________
+Data do Teste: ___/___/___
+Testador: _________________
+
+Cenário Testado: _________________
+
+Resposta Tecnicamente Correta: □ Sim  □ Parcialmente  □ Não
+Contextualização Adequada: □ Sim  □ Parcialmente  □ Não
+Útil para Usuário: □ Sim  □ Parcialmente  □ Não
+
+Tempo de Resposta: ________ segundos
+Qualidade Geral: □ Excelente  □ Boa  □ Regular  □ Ruim
+
+Pontos Fortes:
+____________________________________________________________________________
+____________________________________________________________________________
+
+Pontos de Melhoria:
+____________________________________________________________________________
+____________________________________________________________________________
+
+Observações Adicionais:
+____________________________________________________________________________
+____________________________________________________________________________
+
+═══════════════════════════════════════════════════════════════════════════════

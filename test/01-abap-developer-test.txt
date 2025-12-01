@@ -1,0 +1,381 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    CENÁRIOS DE TESTE - ABAP DEVELOPER
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 OBJETIVO: Testar a geração de código ABAP com diferentes providers (Groq, Gemini, OpenAI, Anthropic)
+🎯 CRITÉRIOS DE SUCESSO: Código gerado deve ser sintaticamente correto, seguir boas práticas SAP e atender aos requisitos
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 1: RELATÓRIO ABAP SIMPLES
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE PROGRAMA: REPORT (Relatório ABAP)
+MODO: Manual
+
+DADOS DE ENTRADA:
+-----------------
+Nome do Programa: ZREP_VENDAS_MENSAL
+Descrição: Relatório de vendas mensais por região
+
+OBJETIVO:
+Criar um relatório que liste as vendas mensais agrupadas por região, com totalizações.
+
+LÓGICA DE NEGÓCIO:
+- Buscar dados da tabela VBRK (Cabeçalho de Documento de Faturamento)
+- Join com VBRP (Item de Documento de Faturamento) para obter valores
+- Filtrar por período (data de faturamento)
+- Agrupar por região de vendas
+- Totalizar valores por região e geral
+- Exibir em formato ALV
+
+TABELAS:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBRK       │ Documento de Faturamento       │ STANDARD │
+│ VBRP       │ Item de Faturamento            │ STANDARD │
+│ TVKBT      │ Texto Organização Vendas       │ STANDARD │
+└────────────┴────────────────────────────────┴──────────┘
+
+CAMPOS PRINCIPAIS:
+┌────────────┬────────────┬─────────────────────┬──────────────┐
+│ Nome       │ Tabela     │ Descrição           │ Tipo         │
+├────────────┼────────────┼─────────────────────┼──────────────┤
+│ VBELN      │ VBRK       │ Nº Documento Fatura │ CHAR(10)     │
+│ FKDAT      │ VBRK       │ Data Faturamento    │ DATS         │
+│ VKORG      │ VBRK       │ Organização Vendas  │ CHAR(4)      │
+│ NETWR      │ VBRP       │ Valor Líquido       │ CURR(15,2)   │
+└────────────┴────────────┴─────────────────────┴──────────────┘
+
+VALIDAÇÕES ESPERADAS:
+✓ Tela de seleção com período (FKDAT) obrigatório
+✓ Seleção opcional de organização de vendas
+✓ Validação de período máximo de 1 ano
+✓ Código deve compilar sem erros
+✓ ALV Grid com layout padrão
+✓ Campos de totalização corretos
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-5-haiku-20241022)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 2: CLASSE ABAP COM MÉTODOS
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE PROGRAMA: CLASS (Classe ABAP)
+MODO: Manual
+
+DADOS DE ENTRADA:
+-----------------
+Nome da Classe: ZCL_CALCULADORA_PRECO
+Descrição: Classe para cálculo de preços com descontos e impostos
+
+OBJETIVO:
+Criar uma classe reutilizável para cálculo de preços finais, considerando descontos progressivos e impostos.
+
+LÓGICA DE NEGÓCIO:
+- Método calcular_preco_final: recebe valor base, percentual de desconto e alíquota de imposto
+- Método validar_desconto: valida se desconto está dentro dos limites permitidos (0-50%)
+- Método aplicar_desconto_progressivo: aplica descontos progressivos por quantidade
+- Método calcular_impostos: calcula impostos sobre o valor
+- Atributos privados para armazenar configurações
+
+TABELAS:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ KONV       │ Condições de Preço             │ STANDARD │
+│ A003       │ Dados de Condição              │ STANDARD │
+└────────────┴────────────────────────────────┴──────────┘
+
+CONTEXTO DA CLASSE:
+- Tipo: Normal
+- Visibilidade: PUBLIC
+- Métodos Públicos:
+  1. CALCULAR_PRECO_FINAL
+     - IMPORTING: iv_valor_base TYPE p DECIMALS 2
+     - IMPORTING: iv_desconto TYPE p DECIMALS 2
+     - IMPORTING: iv_imposto TYPE p DECIMALS 2
+     - RETURNING: rv_valor_final TYPE p DECIMALS 2
+
+  2. VALIDAR_DESCONTO
+     - IMPORTING: iv_desconto TYPE p DECIMALS 2
+     - RETURNING: rv_valido TYPE abap_bool
+
+  3. APLICAR_DESCONTO_PROGRESSIVO
+     - IMPORTING: iv_quantidade TYPE i
+     - RETURNING: rv_percentual_desconto TYPE p DECIMALS 2
+
+VALIDAÇÕES ESPERADAS:
+✓ Classe compilável sem erros
+✓ Métodos com tratamento de exceções
+✓ Validação de parâmetros de entrada
+✓ Uso de constantes para limites
+✓ Documentação inline nos métodos
+✓ Testes unitários sugeridos
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-flash)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 3: FUNCTION MODULE RFC
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE PROGRAMA: RFC_FUNCTION
+MODO: Manual
+
+DADOS DE ENTRADA:
+-----------------
+Nome: Z_RFC_BUSCAR_PEDIDOS
+Descrição: RFC para buscar pedidos de venda com filtros
+
+OBJETIVO:
+Criar um RFC que retorne pedidos de venda filtrados por cliente, data e status.
+
+LÓGICA DE NEGÓCIO:
+- Receber parâmetros de filtro (cliente, data inicial, data final, status)
+- Buscar dados das tabelas VBAK (Cabeçalho) e VBAP (Item)
+- Aplicar filtros conforme parâmetros
+- Retornar tabela interna com resultados
+- Tratar erros e exceções customizadas
+
+TABELAS:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBAK       │ Cabeçalho Ordem Venda          │ STANDARD │
+│ VBAP       │ Item Ordem Venda               │ STANDARD │
+│ KNA1       │ Dados Mestres Cliente          │ STANDARD │
+└────────────┴────────────────────────────────┴──────────┘
+
+CAMPOS:
+┌────────────┬────────────┬─────────────────────┬──────────────┐
+│ Nome       │ Tabela     │ Descrição           │ Tipo         │
+├────────────┼────────────┼─────────────────────┼──────────────┤
+│ VBELN      │ VBAK       │ Nº Ordem de Venda   │ CHAR(10)     │
+│ KUNNR      │ VBAK       │ Cliente             │ CHAR(10)     │
+│ AUDAT      │ VBAK       │ Data do Documento   │ DATS         │
+│ VBTYP      │ VBAK       │ Tipo Documento      │ CHAR(1)      │
+│ NETWR      │ VBAP       │ Valor Líquido       │ CURR(15,2)   │
+└────────────┴────────────┴─────────────────────┴──────────────┘
+
+CONTEXTO FUNCTION MODULE:
+- Function Group: ZPEDIDOS
+- RFC Enabled: Sim
+- IMPORTING:
+  * I_KUNNR TYPE KUNNR (Cliente)
+  * I_DATA_INI TYPE DATUM (Data Inicial)
+  * I_DATA_FIM TYPE DATUM (Data Final)
+  * I_STATUS TYPE CHAR2 (Status)
+- EXPORTING:
+  * E_COUNT TYPE I (Quantidade de registros)
+- TABLES:
+  * T_PEDIDOS TYPE ZTTAB_PEDIDOS (Tabela de retorno)
+- EXCEPTIONS:
+  * DATA_INVALIDA
+  * CLIENTE_NAO_ENCONTRADO
+  * NENHUM_REGISTRO_ENCONTRADO
+
+VALIDAÇÕES ESPERADAS:
+✓ RFC compilável e ativável
+✓ Validação de parâmetros obrigatórios
+✓ Tratamento correto de exceções
+✓ Performance otimizada (SELECT com WHERE clause)
+✓ Documentação de parâmetros
+✓ Log de execução
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-7-sonnet-20250219)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 4: CDS VIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE PROGRAMA: CDS_VIEW
+MODO: Manual
+
+DADOS DE ENTRADA:
+-----------------
+Nome: ZCDS_VENDAS_ANALYTICS
+Descrição: CDS View para Analytics de Vendas
+
+OBJETIVO:
+Criar uma CDS View para ser consumida por Fiori, com agregações e associações.
+
+LÓGICA DE NEGÓCIO:
+- View principal baseada em VBRK e VBRP
+- Associações com KNA1 (Cliente) e MARA (Material)
+- Campos calculados para margem e percentuais
+- Anotações para exposição OData
+- Filtros e parâmetros
+
+TABELAS:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBRK       │ Documento Faturamento          │ STANDARD │
+│ VBRP       │ Item Faturamento               │ STANDARD │
+│ KNA1       │ Mestre Cliente                 │ STANDARD │
+│ MARA       │ Mestre Material                │ STANDARD │
+└────────────┴────────────────────────────────┴──────────┘
+
+CONTEXTO CDS:
+- Tipo: View
+- Base Tables: VBRK, VBRP
+- Associações: KNA1, MARA
+- Expose OData: Sim
+- Anotações: @Analytics, @ObjectModel, @EndUserText
+
+CAMPOS CALCULADOS:
+- Margem: (NETWR - COSTO) / NETWR * 100
+- Total com Imposto: NETWR * (1 + IMPOSTO/100)
+- Status do Pedido (derivado)
+
+VALIDAÇÕES ESPERADAS:
+✓ CDS View compilável e ativável
+✓ Sintaxe SQL correta
+✓ Associações funcionando
+✓ Campos calculados corretos
+✓ Anotações válidas para OData
+✓ Performance otimizada
+
+PROVIDERS A TESTAR:
+□ Groq (openai/gpt-oss-120b)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4-turbo)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 5: BADI IMPLEMENTATION
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPO DE PROGRAMA: BADI
+MODO: Manual
+
+DADOS DE ENTRADA:
+-----------------
+Nome: ZCL_IM_BADI_ORDER_CHECK
+Descrição: Implementação BADI para validação de pedidos
+
+OBJETIVO:
+Implementar BADI de validação de pedidos de venda antes do salvamento.
+
+LÓGICA DE NEGÓCIO:
+- BADI: BADI_SD_SALES_ORDER_CHECK
+- Interface: IF_EX_BADI_ORDER_CHECK
+- Método: CHECK_BEFORE_SAVE
+- Validações:
+  * Valor mínimo do pedido
+  * Cliente bloqueado
+  * Material descontinuado
+  * Limite de crédito
+
+TABELAS:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBAK       │ Cabeçalho Ordem Venda          │ STANDARD │
+│ KNA1       │ Mestre Cliente                 │ STANDARD │
+│ KNKK       │ Controle Crédito               │ STANDARD │
+│ MARA       │ Mestre Material                │ STANDARD │
+└────────────┴────────────────────────────────┴──────────┘
+
+CONTEXTO BADI:
+- BADI Name: BADI_SD_SALES_ORDER_CHECK
+- Interface: IF_EX_BADI_ORDER_CHECK
+- Métodos:
+  1. CHECK_BEFORE_SAVE
+     - CHANGING: ct_vbak TYPE vbak_t
+     - CHANGING: ct_vbap TYPE vbap_t
+     - RAISING: cx_badi_order_check
+
+- Filtros: Organização de Vendas (VKORG)
+
+VALIDAÇÕES ESPERADAS:
+✓ Implementação compilável
+✓ Interface implementada corretamente
+✓ Validações executadas na ordem correta
+✓ Mensagens de erro claras
+✓ Log de validações
+✓ Tratamento de exceções
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITÉRIOS DE AVALIAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+Para cada cenário, avaliar:
+
+1. SINTAXE E COMPILAÇÃO (0-10 pontos)
+   □ Código compila sem erros
+   □ Sintaxe ABAP correta
+   □ Declarações adequadas
+
+2. LÓGICA DE NEGÓCIO (0-10 pontos)
+   □ Atende aos requisitos
+   □ Lógica está correta
+   □ Cálculos precisos
+
+3. BOAS PRÁTICAS (0-10 pontos)
+   □ Nomenclatura adequada
+   □ Comentários úteis
+   □ Código limpo e organizado
+
+4. PERFORMANCE (0-10 pontos)
+   □ SELECTs otimizados
+   □ Uso correto de índices
+   □ Evita loops desnecessários
+
+5. TRATAMENTO DE ERROS (0-10 pontos)
+   □ Exceções tratadas
+   □ Mensagens claras
+   □ Validações de entrada
+
+6. DOCUMENTAÇÃO (0-10 pontos)
+   □ Comentários inline
+   □ Documentação de métodos
+   □ Como usar/testar
+
+PONTUAÇÃO TOTAL: ____ / 60 pontos
+
+═══════════════════════════════════════════════════════════════════════════════
+OBSERVAÇÕES E BUGS ENCONTRADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Provider: _________________
+Data do Teste: ___/___/___
+Testador: _________________
+
+Observações:
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+
+Bugs/Problemas:
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+
+Sugestões de Melhoria:
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+
+═══════════════════════════════════════════════════════════════════════════════

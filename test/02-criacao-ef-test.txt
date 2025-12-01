@@ -1,0 +1,402 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    CENÁRIOS DE TESTE - CRIAÇÃO DE EF
+              (Especificação Funcional com Refinamento por IA)
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 OBJETIVO: Testar o refinamento de Especificações Funcionais com diferentes providers
+🎯 CRITÉRIOS DE SUCESSO: EF refinada deve ter estrutura completa, clareza e detalhamento técnico adequado
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 1: EF PARA RELATÓRIO DE VENDAS
+═══════════════════════════════════════════════════════════════════════════════
+
+DADOS DE ENTRADA:
+-----------------
+Título: Relatório Gerencial de Vendas por Região
+Versão: 1.0
+Autor: João Silva
+Descrição: Relatório que apresenta as vendas consolidadas por região com gráficos
+
+Módulo SAP: SD - Sales and Distribution
+Data Criação: 01/12/2025
+Empresa: Empresa XYZ Ltda
+Tipo de Programa: ALV Report
+
+Consultor:
+- Nome: João Silva
+- Cargo: Consultor Funcional SD
+
+Equipe:
+┌─────────────────┬──────────────────────────┬────────────────────────┐
+│ Nome            │ Cargo                    │ Email                  │
+├─────────────────┼──────────────────────────┼────────────────────────┤
+│ João Silva      │ Consultor Funcional      │ joao.silva@xyz.com     │
+│ Maria Santos    │ Desenvolvedor ABAP       │ maria.santos@xyz.com   │
+│ Pedro Lima      │ Analista de Testes       │ pedro.lima@xyz.com     │
+└─────────────────┴──────────────────────────┴────────────────────────┘
+
+Visão Geral:
+Desenvolver relatório gerencial que consolide as vendas por região, permitindo
+análise de performance e identificação de oportunidades.
+
+Motivo da EF:
+Necessidade de visualização consolidada das vendas por região para apoio à tomada
+de decisão gerencial. Atualmente não existe ferramenta que agrupe essas informações
+de forma clara e prática.
+
+Especificação Detalhada:
+O relatório deve apresentar:
+- Tela de seleção com filtros de período, região e tipo de cliente
+- Dados consolidados de vendas (quantidade e valor)
+- Comparativo com período anterior
+- Gráfico de barras por região
+- Exportação para Excel
+- Drill-down para detalhes por cliente
+
+Tabelas SAP:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBRK       │ Documento de Faturamento       │ STANDARD │
+│ VBRP       │ Item de Faturamento            │ STANDARD │
+│ KNA1       │ Mestre de Clientes             │ STANDARD │
+│ TVKBT      │ Texto Organização Vendas       │ STANDARD │
+└────────────┴────────────────────────────────┴──────────┘
+
+Módulos/FMs:
+┌───────────────────────┬────────────────────────┬──────────┐
+│ Nome                  │ Descrição              │ Tipo     │
+├───────────────────────┼────────────────────────┼──────────┤
+│ REUSE_ALV_GRID_DISPLAY│ Exibição ALV           │ FM       │
+│ POPUP_TO_CONFIRM      │ Popup de Confirmação   │ FM       │
+└───────────────────────┴────────────────────────┴──────────┘
+
+VALIDAÇÕES ESPERADAS NO REFINAMENTO:
+✓ Seção "Informações Básicas" completa
+✓ Seção "Visão Geral" com objetivos claros (pelo menos 3)
+✓ Seção "Especificação" detalhada com:
+  - Introdução
+  - Processos (pelo menos 2 processos com passos)
+  - Regras de negócio (pelo menos 3)
+  - Considerações técnicas (pelo menos 2)
+✓ Recursos técnicos mapeados
+✓ Observações com próximos passos
+✓ JSON válido e bem formatado
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-5-haiku-20241022)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 2: EF PARA INTERFACE RFC
+═══════════════════════════════════════════════════════════════════════════════
+
+DADOS DE ENTRADA:
+-----------------
+Título: Interface de Integração de Pedidos - E-commerce
+Versão: 2.0
+Autor: Ana Paula Costa
+Descrição: Interface RFC para receber pedidos do e-commerce e criar no SAP SD
+
+Módulo SAP: SD - Sales and Distribution
+Data Criação: 01/12/2025
+Empresa: Varejo Digital S.A.
+Tipo de Programa: RFC Function Module
+
+Consultor:
+- Nome: Ana Paula Costa
+- Cargo: Arquiteto SAP
+
+Equipe:
+┌─────────────────┬──────────────────────────┬────────────────────────┐
+│ Nome            │ Cargo                    │ Email                  │
+├─────────────────┼──────────────────────────┼────────────────────────┤
+│ Ana Paula Costa │ Arquiteto SAP            │ ana.costa@varejo.com   │
+│ Carlos Ferreira │ Desenvolvedor ABAP       │ carlos.f@varejo.com    │
+│ Lucia Mendes    │ Consultor Funcional SD   │ lucia.m@varejo.com     │
+│ Roberto Silva   │ Analista de Integração   │ roberto.s@varejo.com   │
+└─────────────────┴──────────────────────────┴────────────────────────┘
+
+Visão Geral:
+Criar interface RFC para integração síncrona entre plataforma de e-commerce e
+SAP SD, permitindo criação automática de pedidos de venda.
+
+Motivo da EF:
+Necessidade de automatizar a criação de pedidos originados do e-commerce,
+eliminando digitação manual e reduzindo erros. Volume esperado: 5000 pedidos/dia.
+
+Especificação Detalhada:
+A interface deve:
+- Receber dados do pedido em estrutura JSON convertida
+- Validar cliente, material, preços e disponibilidade
+- Criar pedido de venda usando BAPI_SALESORDER_CREATEFROMDAT2
+- Realizar commit/rollback conforme sucesso
+- Retornar número do pedido SAP ou mensagens de erro
+- Registrar log de todas as integrações
+- Tratar cenários de erro (cliente inexistente, material sem estoque, etc)
+- Performance: < 2 segundos por pedido
+
+Tabelas SAP:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBAK       │ Cabeçalho Ordem Venda          │ STANDARD │
+│ VBAP       │ Item Ordem Venda               │ STANDARD │
+│ KNA1       │ Mestre Cliente                 │ STANDARD │
+│ MARA       │ Mestre Material                │ STANDARD │
+│ MARD       │ Estoque por Depósito           │ STANDARD │
+│ ZTAB_LOG   │ Log de Integrações             │ ZTABLE   │
+└────────────┴────────────────────────────────┴──────────┘
+
+Módulos/FMs:
+┌─────────────────────────────────────┬───────────────────────┬──────────┐
+│ Nome                                │ Descrição             │ Tipo     │
+├─────────────────────────────────────┼───────────────────────┼──────────┤
+│ BAPI_SALESORDER_CREATEFROMDAT2      │ Criar Pedido Venda    │ BAPI     │
+│ BAPI_TRANSACTION_COMMIT             │ Commit Transação      │ BAPI     │
+│ BAPI_TRANSACTION_ROLLBACK           │ Rollback Transação    │ BAPI     │
+│ CONVERSION_EXIT_ALPHA_INPUT         │ Conversão Alfanumérica│ FM       │
+│ Z_CHECK_MATERIAL_AVAILABILITY       │ Verificar Estoque     │ FM       │
+└─────────────────────────────────────┴───────────────────────┴──────────┘
+
+VALIDAÇÕES ESPERADAS NO REFINAMENTO:
+✓ Descrição de integração completa e clara
+✓ Fluxo de integração documentado (passo a passo)
+✓ Estrutura de dados de entrada/saída definida
+✓ Tratamento de erros detalhado
+✓ Regras de validação especificadas
+✓ Considerações de performance
+✓ Estratégia de log e auditoria
+✓ Cenários de teste sugeridos
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-1.5-pro)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 3: EF PARA ENHANCEMENT DE TRANSAÇÃO PADRÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+DADOS DE ENTRADA:
+-----------------
+Título: Enhancement VA01 - Validação Customizada de Crédito
+Versão: 1.0
+Autor: Ricardo Almeida
+Descrição: Enhancement na transação VA01 para validação adicional de limite de crédito
+
+Módulo SAP: SD - Sales and Distribution
+Data Criação: 01/12/2025
+Empresa: Indústria ABC Ltda
+Tipo de Programa: Enhancement Implementation
+
+Consultor:
+- Nome: Ricardo Almeida
+- Cargo: Consultor Técnico SD
+
+Equipe:
+┌─────────────────┬──────────────────────────┬────────────────────────┐
+│ Nome            │ Cargo                    │ Email                  │
+├─────────────────┼──────────────────────────┼────────────────────────┤
+│ Ricardo Almeida │ Consultor Técnico        │ ricardo.a@abc.com      │
+│ Fernanda Costa  │ Consultor Funcional FI   │ fernanda.c@abc.com     │
+│ Marcos Pereira  │ Desenvolvedor ABAP       │ marcos.p@abc.com       │
+└─────────────────┴──────────────────────────┴────────────────────────┘
+
+Visão Geral:
+Implementar validação adicional de crédito na criação de pedidos de venda
+(VA01), considerando regras específicas da empresa além do controle padrão SAP.
+
+Motivo da EF:
+Necessidade de controle mais rigoroso de crédito, considerando:
+- Títulos vencidos
+- Pedidos em aberto
+- Limite customizado por grupo de clientes
+- Exceções para clientes VIP
+
+Especificação Detalhada:
+O enhancement deve:
+- Ser acionado no evento de salvamento do pedido
+- Buscar saldo de títulos a receber do cliente
+- Calcular valor total de pedidos em aberto
+- Verificar limite de crédito customizado (tabela Z)
+- Considerar exceções para clientes VIP
+- Emitir mensagem de warning ou error conforme criticidade
+- Permitir liberação manual por usuários autorizados
+- Registrar todas as validações em log
+
+Tabelas SAP:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ VBAK       │ Cabeçalho Ordem Venda          │ STANDARD │
+│ KNA1       │ Mestre Cliente                 │ STANDARD │
+│ KNKK       │ Controle Crédito Cliente       │ STANDARD │
+│ BSID       │ Partidas Abertas Devedoras     │ STANDARD │
+│ ZTAB_CRED  │ Limite Crédito Customizado     │ ZTABLE   │
+│ ZTAB_VIP   │ Clientes VIP                   │ ZTABLE   │
+└────────────┴────────────────────────────────┴──────────┘
+
+VALIDAÇÕES ESPERADAS NO REFINAMENTO:
+✓ Identificação do enhancement point correto
+✓ Lógica de validação detalhada
+✓ Fórmula de cálculo de limite disponível
+✓ Tratamento de exceções (VIP, autorizações)
+✓ Mensagens ao usuário (tipo, texto)
+✓ Impacto em performance avaliado
+✓ Estratégia de ativação/desativação
+✓ Plano de testes detalhado
+
+PROVIDERS A TESTAR:
+□ Groq (openai/gpt-oss-120b)
+□ Gemini (gemini-1.5-flash)
+□ OpenAI (gpt-4o-mini)
+□ Anthropic (claude-3-7-sonnet-20250219)
+
+═══════════════════════════════════════════════════════════════════════════════
+CENÁRIO 4: EF PARA FIORI APP
+═══════════════════════════════════════════════════════════════════════════════
+
+DADOS DE ENTRADA:
+-----------------
+Título: Fiori App - Aprovação de Ordens de Compra
+Versão: 1.0
+Autor: Patricia Oliveira
+Descrição: App Fiori para aprovação mobile de ordens de compra
+
+Módulo SAP: MM - Materials Management
+Data Criação: 01/12/2025
+Empresa: Grupo Logística XYZ
+Tipo de Programa: Fiori Elements App
+
+Consultor:
+- Nome: Patricia Oliveira
+- Cargo: Consultor Fiori/UX
+
+Equipe:
+┌─────────────────┬──────────────────────────┬────────────────────────┐
+│ Nome            │ Cargo                    │ Email                  │
+├─────────────────┼──────────────────────────┼────────────────────────┤
+│ Patricia Oliv.  │ Consultor Fiori          │ patricia.o@log.com     │
+│ Bruno Alves     │ Desenvolvedor ABAP/RAP   │ bruno.a@log.com        │
+│ Julia Martins   │ Designer UX              │ julia.m@log.com        │
+│ Andre Santos    │ Consultor Funcional MM   │ andre.s@log.com        │
+└─────────────────┴──────────────────────────┴────────────────────────┘
+
+Visão Geral:
+Desenvolver aplicativo Fiori responsivo para aprovação de ordens de compra via
+mobile/tablet, agilizando processo de aprovação.
+
+Motivo da EF:
+Necessidade de mobilidade no processo de aprovação. Gestores precisam aprovar
+ordens fora do escritório. Prazo médio de aprovação atual: 3 dias. Meta: 1 dia.
+
+Especificação Detalhada:
+O app deve:
+- Listar ordens pendentes de aprovação do usuário logado
+- Exibir detalhes da ordem (fornecedor, itens, valores, anexos)
+- Permitir aprovação ou rejeição com comentário
+- Suportar aprovação em lote
+- Notificações push para novas solicitações
+- Funcionar offline (sincronizar quando online)
+- Dashboard com métricas (pendentes, aprovadas, rejeitadas)
+- Histórico de aprovações
+- Filtros e busca
+
+Tabelas SAP:
+┌────────────┬────────────────────────────────┬──────────┐
+│ Nome       │ Descrição                      │ Tipo     │
+├────────────┼────────────────────────────────┼──────────┤
+│ EKKO       │ Cabeçalho Ordem Compra         │ STANDARD │
+│ EKPO       │ Item Ordem Compra              │ STANDARD │
+│ LFA1       │ Mestre Fornecedor              │ STANDARD │
+│ ZTAB_APROV │ Log Aprovações                 │ ZTABLE   │
+└────────────┴────────────────────────────────┴──────────┘
+
+Módulos/FMs:
+┌─────────────────────────────────────┬───────────────────────┬──────────┐
+│ Nome                                │ Descrição             │ Tipo     │
+├─────────────────────────────────────┼───────────────────────┼──────────┤
+│ ZCDS_PURCHASE_ORDERS                │ CDS View Ordens       │ CDS_VIEW │
+│ ZBAPI_PO_APPROVE                    │ Aprovar Ordem         │ BAPI     │
+│ ZBAPI_PO_REJECT                     │ Rejeitar Ordem        │ BAPI     │
+│ ZODATA_APPROVAL_SRV                 │ OData Service         │ ODATA    │
+└─────────────────────────────────────┴───────────────────────┴──────────┘
+
+VALIDAÇÕES ESPERADAS NO REFINAMENTO:
+✓ Especificação de UX/UI detalhada
+✓ Wireframes ou mockups sugeridos
+✓ Fluxo de navegação definido
+✓ CDS Views necessárias listadas
+✓ OData Service especificado
+✓ Estratégia offline definida
+✓ Requisitos de segurança (autorizações)
+✓ Considerações de performance mobile
+
+PROVIDERS A TESTAR:
+□ Groq (llama-3.3-70b-versatile)
+□ Gemini (gemini-2.0-flash-exp)
+□ OpenAI (gpt-4o)
+□ Anthropic (claude-sonnet-4-5-20250929)
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITÉRIOS DE AVALIAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+Para cada cenário, avaliar:
+
+1. COMPLETUDE DA ESTRUTURA (0-10 pontos)
+   □ Todas as seções presentes
+   □ Informações básicas completas
+   □ Dados SAP corretos
+
+2. CLAREZA E DETALHAMENTO (0-10 pontos)
+   □ Linguagem clara e objetiva
+   □ Especificações detalhadas
+   □ Processos bem descritos
+
+3. QUALIDADE DOS OBJETIVOS (0-10 pontos)
+   □ Objetivos mensuráveis
+   □ Alinhados com o problema
+   □ Realistas e alcançáveis
+
+4. REGRAS DE NEGÓCIO (0-10 pontos)
+   □ Regras bem definidas
+   □ Completas e claras
+   □ Implementáveis
+
+5. CONSIDERAÇÕES TÉCNICAS (0-10 pontos)
+   □ Aspectos técnicos cobertos
+   □ Performance considerada
+   □ Segurança abordada
+
+6. OBSERVAÇÕES E PRÓXIMOS PASSOS (0-10 pontos)
+   □ Notas importantes presentes
+   □ Próximos passos definidos
+   □ Referências úteis
+
+PONTUAÇÃO TOTAL: ____ / 60 pontos
+
+═══════════════════════════════════════════════════════════════════════════════
+OBSERVAÇÕES E BUGS ENCONTRADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+Provider: _________________
+Data do Teste: ___/___/___
+Testador: _________________
+
+Observações:
+____________________________________________________________________________
+____________________________________________________________________________
+____________________________________________________________________________
+
+JSON Válido: □ Sim  □ Não
+
+Tempo de Processamento: ________ segundos
+
+Qualidade Geral: □ Excelente  □ Boa  □ Regular  □ Ruim
+
+═══════════════════════════════════════════════════════════════════════════════

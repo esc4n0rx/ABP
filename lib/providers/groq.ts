@@ -1,12 +1,6 @@
-import Groq from 'groq-sdk'
 import { EFFormData, EFRefinada } from '@/types/ef'
 import { gerarPromptEF, validarResposta, extrairJSON } from '@/lib/prompts/efprompt'
-
-// Inicializa o cliente Groq
-// A API key deve estar em GROQ_API_KEY no .env.local
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY,
-})
+import { createProviderManager } from '@/lib/providers/provider-manager'
 
 export interface RefinamentoEFResponse {
   success: boolean
@@ -16,12 +10,14 @@ export interface RefinamentoEFResponse {
 }
 
 /**
- * Refina uma Especificação Funcional usando IA Groq
+ * Refina uma Especificação Funcional usando IA
  * @param formData - Dados do formulário de criação de EF
+ * @param userId - ID do usuário para usar o provider configurado
  * @returns Promise com o resultado do refinamento
  */
 export async function refinarEspecificacaoFuncional(
-  formData: EFFormData
+  formData: EFFormData,
+  userId: string
 ): Promise<RefinamentoEFResponse> {
   try {
     // Gera o prompt com os dados do formulário
@@ -29,9 +25,12 @@ export async function refinarEspecificacaoFuncional(
 
     console.log('🤖 Iniciando refinamento da EF com IA...')
 
-    // Chama a API Groq para refinar o conteúdo
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
+    // Cria provider manager para o usuário
+    const providerManager = await createProviderManager(userId)
+
+    // Chama a IA usando o provider configurado
+    const response = await providerManager.generateContent(
+      [
         {
           role: 'system',
           content:
@@ -42,15 +41,15 @@ export async function refinarEspecificacaoFuncional(
           content: prompt,
         },
       ],
-      model: 'llama-3.3-70b-versatile', // Modelo mais adequado para tarefas estruturadas
-      temperature: 0.3, // Temperatura baixa para mais consistência
-      max_completion_tokens: 8000, // Aumento do limite para documentos grandes
-      top_p: 0.9,
-      stream: false, // Desabilitado para obter resposta completa
-    })
+      {
+        temperature: 0.3,
+        maxTokens: 8000,
+        topP: 0.9,
+      }
+    )
 
     // Extrai o conteúdo da resposta
-    const rawResponse = chatCompletion.choices[0]?.message?.content || ''
+    const rawResponse = response.content || ''
 
     console.log('📝 Resposta bruta recebida da IA')
 
@@ -114,26 +113,25 @@ export async function refinarEspecificacaoFuncional(
 }
 
 /**
- * Testa a conexão com a API Groq
+ * Testa a conexão com o provider do usuário
+ * @param userId - ID do usuário
  * @returns Promise com status da conexão
  */
-export async function testarConexaoGroq(): Promise<{
+export async function testarConexaoProvider(userId: string): Promise<{
   success: boolean
   message: string
 }> {
   try {
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: 'Responda apenas: OK',
-        },
-      ],
-      model: 'llama-3.3-70b-versatile',
-      max_completion_tokens: 10,
-    })
+    const providerManager = await createProviderManager(userId)
 
-    const resposta = completion.choices[0]?.message?.content || ''
+    const response = await providerManager.generateContent([
+      {
+        role: 'user',
+        content: 'Responda apenas: OK',
+      },
+    ])
+
+    const resposta = response.content || ''
 
     return {
       success: true,
@@ -142,7 +140,7 @@ export async function testarConexaoGroq(): Promise<{
   } catch (error: any) {
     return {
       success: false,
-      message: error?.message || 'Erro ao conectar com Groq',
+      message: error?.message || 'Erro ao conectar com o provider',
     }
   }
 }
