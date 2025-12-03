@@ -1,0 +1,165 @@
+{
+  "titulo": "Teste 2: Module Pool - Cadastro de Pedidos de Venda",
+  "descricao": "Este teste valida se a IA consegue gerar um MODULE_POOL complexo subdividido em: MAIN_PROGRAM, INCLUDE_TOP, SCREEN, SCREEN_LOGIC, INCLUDE_MODULES, INCLUDE_FORMS, CLASS_LOCAL",
+  "tipo_teste": "MODULE_POOL",
+  "complexidade_esperada": "alta",
+  "artefatos_esperados": [
+    "MAIN_PROGRAM",
+    "INCLUDE_TOP",
+    "SCREEN",
+    "SCREEN_LOGIC",
+    "INCLUDE_MODULES",
+    "INCLUDE_FORMS",
+    "CLASS_LOCAL"
+  ],
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "MODULE_POOL",
+    "nome_programa": "ZSALES_ORDER_APP",
+    "objetivo": "Aplicação de cadastro e manutenção de pedidos de venda com múltiplas telas e validações complexas",
+    "logica_negocio": "O programa deve permitir criar, editar, exibir e excluir pedidos de venda customizados na tabela Z. Deve ter tela principal (9000) com menu de opções, tela de lista de pedidos (9100) com ALV, tela de detalhes do pedido (9200) com cabeçalho e itens, e tela de confirmação (9300). Incluir validações de dados, verificação de estoque, cálculo automático de impostos e descontos, integração com tabelas SAP padrão (KNA1, MARA, MAKT) e gravação em tabelas Z (ZSALES_HEAD, ZSALES_ITEM). Implementar transação customizada.",
+    "processos": [
+      "Tela 9000: Menu principal com botões (Criar, Listar, Sair)",
+      "Tela 9100: Lista de pedidos existentes em ALV Container",
+      "Tela 9200: Formulário de criação/edição com campos de cabeçalho e tabela control de itens",
+      "Tela 9300: Tela de confirmação antes de gravar",
+      "Validação de cliente (verificar se existe em KNA1)",
+      "Validação de material (verificar se existe e está ativo em MARA)",
+      "Cálculo de total do pedido (soma de itens)",
+      "Cálculo de impostos (ICMS, PIS, COFINS) baseado em região",
+      "Aplicação de descontos progressivos por volume",
+      "Gravação em banco de dados (ZSALES_HEAD e ZSALES_ITEM)",
+      "Commit work ou rollback em caso de erro",
+      "Mensagens de status para usuário"
+    ],
+    "regras_negocio": [
+      "Cliente deve existir e estar ativo (KNA1-LOEVM = ' ')",
+      "Material deve existir e não estar bloqueado (MARA-LVORM = ' ')",
+      "Quantidade mínima por item: 1",
+      "Quantidade máxima por item: 9999",
+      "Desconto máximo permitido: 30%",
+      "ICMS: 18% para SP, 12% para MG, 7% para outros estados",
+      "PIS: 1.65% sobre valor bruto",
+      "COFINS: 7.6% sobre valor bruto",
+      "Desconto progressivo: 5% se total > R$ 10.000, 10% se > R$ 50.000, 15% se > R$ 100.000",
+      "Pedido só pode ser excluído se status = 'Aberto'",
+      "Obrigatório informar: Cliente, Data do pedido, Condição de pagamento",
+      "Data do pedido não pode ser futura",
+      "Data de entrega deve ser >= Data do pedido + 3 dias"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "ZSALES_HEAD",
+        "descricao": "Tabela customizada para cabeçalho de pedidos",
+        "tipo": "ZTABLE",
+        "campos_usados": ["MANDT", "PEDIDO", "KUNNR", "DATA_PED", "DATA_ENT", "STATUS", "TOTAL", "DESCONTO", "IMPOSTOS", "ERNAM", "ERDAT"]
+      },
+      {
+        "nome_tabela": "ZSALES_ITEM",
+        "descricao": "Tabela customizada para itens de pedidos",
+        "tipo": "ZTABLE",
+        "campos_usados": ["MANDT", "PEDIDO", "ITEM", "MATNR", "QUANTIDADE", "PRECO", "TOTAL_ITEM", "DESCONTO_ITEM"]
+      },
+      {
+        "nome_tabela": "KNA1",
+        "descricao": "Cadastro de clientes",
+        "tipo": "STANDARD",
+        "campos_usados": ["KUNNR", "NAME1", "ORT01", "REGIO", "LOEVM"]
+      },
+      {
+        "nome_tabela": "MARA",
+        "descricao": "Cadastro de materiais",
+        "tipo": "STANDARD",
+        "campos_usados": ["MATNR", "MEINS", "MTART", "LVORM"]
+      },
+      {
+        "nome_tabela": "MAKT",
+        "descricao": "Descrição de materiais",
+        "tipo": "STANDARD",
+        "campos_usados": ["MATNR", "SPRAS", "MAKTX"]
+      }
+    ],
+    "campos": [],
+    "funcoes_modulos": [
+      {
+        "nome": "NUMBER_GET_NEXT",
+        "tipo": "FM",
+        "descricao": "Geração de número sequencial para pedido",
+        "parametros": "NR_RANGE_NR, OBJECT, QUANTITY, NUMBER"
+      },
+      {
+        "nome": "POPUP_TO_CONFIRM",
+        "tipo": "FM",
+        "descricao": "Popup de confirmação antes de gravar/excluir",
+        "parametros": "TITLEBAR, TEXT_QUESTION, ANSWER"
+      },
+      {
+        "nome": "CONVERSION_EXIT_ALPHA_INPUT",
+        "tipo": "FM",
+        "descricao": "Conversão de entrada com zeros à esquerda",
+        "parametros": "INPUT, OUTPUT"
+      }
+    ],
+    "contexto_especifico": {
+      "screens": [
+        {
+          "numero": 9000,
+          "descricao": "Tela principal com menu de opções",
+          "tipo": "normal"
+        },
+        {
+          "numero": 9100,
+          "descricao": "Lista de pedidos com ALV Container",
+          "tipo": "container"
+        },
+        {
+          "numero": 9200,
+          "descricao": "Formulário de criação/edição de pedido",
+          "tipo": "subscreen"
+        },
+        {
+          "numero": 9300,
+          "descricao": "Tela de confirmação",
+          "tipo": "popup"
+        }
+      ],
+      "tem_alv_container": true,
+      "tem_table_control": true,
+      "tem_transacao_customizada": true
+    }
+  },
+  "instrucoes_teste": [
+    "1. Copie o conteúdo de 'formData' acima",
+    "2. Cole no formulário do AbapModal (modo manual)",
+    "3. Gere o código",
+    "4. Verifique se a IA gerou os seguintes artefatos:",
+    "   - ZSALES_ORDER_APP (MAIN_PROGRAM)",
+    "   - ZSALES_ORDER_APP_TOP (INCLUDE_TOP) com declarações globais",
+    "   - SCREEN_9000, SCREEN_9100, SCREEN_9200, SCREEN_9300 (SCREEN)",
+    "   - ZSALES_ORDER_APP_O01 (INCLUDE_MODULES) com módulos PBO",
+    "   - ZSALES_ORDER_APP_I01 (INCLUDE_MODULES) com módulos PAI",
+    "   - ZSALES_ORDER_APP_F01 (INCLUDE_FORMS) com forms de validação e processamento",
+    "   - LCL_SALES_HANDLER ou similar (CLASS_LOCAL) para lógica de negócio",
+    "5. Valide que:",
+    "   - Cada screen tem PBO e PAI definidos",
+    "   - Validações estão implementadas",
+    "   - Cálculos de impostos e descontos estão corretos",
+    "   - Includes estão corretamente referenciados",
+    "   - Estrutura segue padrão SAP (TOP, O01, I01, F01)"
+  ],
+  "resultado_esperado": {
+    "total_arquivos_min": 7,
+    "total_arquivos_max": 10,
+    "complexidade": "alta",
+    "deve_conter": [
+      "INCLUDE TOP com declarações de work areas, tabelas internas, controls",
+      "Múltiplos SCREENS com diferentes finalidades",
+      "SCREEN_LOGIC (PBO/PAI) para cada tela",
+      "Módulos PBO (MODULE xxx OUTPUT)",
+      "Módulos PAI (MODULE xxx INPUT)",
+      "FORMS para validações e cálculos",
+      "CLASSE local para encapsular lógica de negócio",
+      "Tratamento de erros com MESSAGE"
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "titulo": "Teste 1: Relatório ALV de Vendas por Região",
+  "descricao": "Este teste valida se a IA consegue gerar um ALV_REPORT complexo subdividido em: MAIN_PROGRAM, INCLUDE_TOP, CLASS_LOCAL, INCLUDE_FORMS",
+  "tipo_teste": "ALV_REPORT",
+  "complexidade_esperada": "alta",
+  "artefatos_esperados": [
+    "MAIN_PROGRAM",
+    "INCLUDE_TOP",
+    "CLASS_LOCAL",
+    "INCLUDE_FORMS",
+    "UNIT_TEST"
+  ],
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "ALV_REPORT",
+    "nome_programa": "ZREP_VENDAS_REGIONAL",
+    "objetivo": "Relatório ALV interativo de vendas por região com drill-down por cliente e produto",
+    "logica_negocio": "O relatório deve buscar dados de vendas (VBRK/VBRP) cruzando com dados de clientes (KNA1) e materiais (MARA). Deve permitir filtro por período, região, cliente e status do documento. Exibir em ALV com possibilidade de drill-down para ver detalhes de itens. Incluir totalizações por região e subtotalizações por cliente. Deve ter eventos de duplo clique para exibir documento completo (VA03) e hotspot no número do cliente para exibir cadastro (XD03). Implementar botão customizado para exportar para Excel.",
+    "processos": [
+      "Seleção de dados com JOIN de VBRK, VBRP, KNA1 e MARA",
+      "Agregação de valores por região e cliente",
+      "Formatação de campos (valores monetários, datas, percentuais)",
+      "Exibição em ALV Grid com layout customizado",
+      "Implementação de eventos ALV (duplo clique, hotspot, botões)",
+      "Drill-down hierárquico (Região > Cliente > Documentos > Itens)"
+    ],
+    "regras_negocio": [
+      "Considerar apenas documentos com status 'C' (Completo) e tipo 'F2' (Fatura)",
+      "Cálculo de desconto: (Valor Bruto - Valor Líquido) / Valor Bruto * 100",
+      "Exibir valor em moeda local (BRL) convertido se necessário",
+      "Destacar em vermelho vendas com desconto > 20%",
+      "Destacar em verde vendas acima de R$ 100.000",
+      "Período padrão: últimos 3 meses",
+      "Região obrigatória se usuário não tiver autorização S_VBRK_REG"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "VBRK",
+        "descricao": "Dados de cabeçalho do documento de faturamento",
+        "tipo": "STANDARD",
+        "campos_usados": ["VBELN", "FKDAT", "KUNAG", "NETWR", "WAERK", "FKART", "FKSTO"]
+      },
+      {
+        "nome_tabela": "VBRP",
+        "descricao": "Itens do documento de faturamento",
+        "tipo": "STANDARD",
+        "campos_usados": ["VBELN", "POSNR", "MATNR", "FKIMG", "VRKME", "NETWR", "MWSBP"]
+      },
+      {
+        "nome_tabela": "KNA1",
+        "descricao": "Dados gerais de clientes",
+        "tipo": "STANDARD",
+        "campos_usados": ["KUNNR", "NAME1", "ORT01", "REGIO", "LAND1"]
+      },
+      {
+        "nome_tabela": "MARA",
+        "descricao": "Dados gerais de material",
+        "tipo": "STANDARD",
+        "campos_usados": ["MATNR", "MAKTX", "MEINS", "MTART"]
+      }
+    ],
+    "campos": [
+      {
+        "nome_campo": "PERC_DESCONTO",
+        "descricao": "Percentual de desconto calculado",
+        "tipo_dado": "DEC",
+        "tamanho": 5,
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "VALOR_TOTAL_REGIAO",
+        "descricao": "Total de vendas da região",
+        "tipo_dado": "CURR",
+        "tamanho": 15,
+        "obrigatorio": false
+      }
+    ],
+    "funcoes_modulos": [
+      {
+        "nome": "REUSE_ALV_GRID_DISPLAY",
+        "tipo": "FM",
+        "descricao": "Exibição de ALV Grid (alternativa se não usar CL_SALV)",
+        "parametros": "IT_FIELDCAT, IS_LAYOUT, IT_OUTTAB"
+      },
+      {
+        "nome": "CONVERSION_EXIT_ALPHA_OUTPUT",
+        "tipo": "FM",
+        "descricao": "Conversão de números com zeros à esquerda",
+        "parametros": "INPUT, OUTPUT"
+      }
+    ],
+    "contexto_especifico": {
+      "tipo_alv": "grid",
+      "tem_layout_padrao": true,
+      "tem_filtros": true,
+      "tem_totalizacao": true,
+      "campos_hotspot": ["KUNAG", "VBELN"],
+      "tem_edicao": false
+    }
+  },
+  "instrucoes_teste": [
+    "1. Copie o conteúdo de 'formData' acima",
+    "2. Cole no formulário do AbapModal (modo manual)",
+    "3. Gere o código",
+    "4. Verifique se a IA gerou os seguintes artefatos:",
+    "   - ZREP_VENDAS_REGIONAL (MAIN_PROGRAM)",
+    "   - ZREP_VENDAS_REGIONAL_TOP (INCLUDE_TOP) com declarações e types",
+    "   - LCL_ALV_HANDLER ou similar (CLASS_LOCAL) para eventos ALV",
+    "   - ZREP_VENDAS_REGIONAL_F01 (INCLUDE_FORMS) com forms de processamento",
+    "   - Opcional: LTC_VENDAS_REGIONAL (UNIT_TEST)",
+    "5. Valide que:",
+    "   - Código principal referencia os includes (INCLUDE xxx)",
+    "   - Dependências estão corretas (TOP é usado por todos)",
+    "   - Número de linhas está distribuído (não tudo no principal)",
+    "   - Instruções de instalação estão adequadas"
+  ],
+  "resultado_esperado": {
+    "total_arquivos_min": 4,
+    "total_arquivos_max": 6,
+    "complexidade": "alta",
+    "deve_conter": [
+      "INCLUDE com TABLES, TYPES, DATA",
+      "CLASSE local com métodos para eventos ALV",
+      "FORMS para processar dados e exibir ALV",
+      "SELECTION-SCREEN com parâmetros",
+      "Comentários explicativos"
+    ]
+  }
+}

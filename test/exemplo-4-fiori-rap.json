@@ -1,0 +1,215 @@
+{
+  "titulo": "Teste 4: Fiori Elements / RAP - App de Gerenciamento de Projetos",
+  "descricao": "Este teste valida se a IA consegue gerar um app RAP/Fiori completo subdividido em: CDS_VIEW (múltiplas), BEHAVIOR_DEFINITION, BEHAVIOR_IMPLEMENTATION, SERVICE_DEFINITION, SERVICE_BINDING, METADATA_EXTENSION",
+  "tipo_teste": "FIORI_ELEMENTS",
+  "complexidade_esperada": "alta",
+  "artefatos_esperados": [
+    "CDS_VIEW",
+    "CDS_VIEW",
+    "BEHAVIOR_DEFINITION",
+    "BEHAVIOR_IMPLEMENTATION",
+    "SERVICE_DEFINITION",
+    "SERVICE_BINDING",
+    "METADATA_EXTENSION"
+  ],
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "FIORI_ELEMENTS",
+    "nome_programa": "Z_PROJECT_MANAGEMENT_APP",
+    "objetivo": "Aplicação Fiori Elements para gerenciar projetos com RESTful ABAP Programming (RAP). Permitir criar, editar, visualizar e excluir projetos e suas tarefas associadas. Incluir validações, determinações, side effects e ações customizadas.",
+    "logica_negocio": "O app deve gerenciar projetos (ZPROJECTS) e suas tarefas (ZTASKS) em uma relação 1:N. Cada projeto tem código, nome, descrição, data início, data fim prevista, status, gerente responsável e orçamento. Cada tarefa tem código, descrição, responsável, data início, data fim, status, horas estimadas e horas realizadas. Deve validar: datas (fim >= início), status (transições permitidas), orçamento (não pode ser negativo), responsável (deve existir em tabela de usuários). Deve determinar automaticamente: status do projeto baseado em tarefas, percentual de conclusão, horas totais. Deve ter ações: Iniciar Projeto, Concluir Projeto, Cancelar Projeto, Aprovar Tarefa. Interface Fiori Elements List Report + Object Page.",
+    "processos": [
+      "CRUD de projetos (Create, Read, Update, Delete)",
+      "CRUD de tarefas vinculadas a projetos",
+      "Validação de datas (data fim >= data início)",
+      "Validação de transição de status (workflow)",
+      "Validação de orçamento (> 0)",
+      "Validação de responsável (existe em usuários)",
+      "Determinação de status do projeto (baseado em tarefas)",
+      "Determinação de percentual de conclusão",
+      "Cálculo de horas totais (estimadas vs realizadas)",
+      "Ação: Iniciar Projeto (muda status para 'Em Andamento')",
+      "Ação: Concluir Projeto (muda status para 'Concluído', valida se todas tarefas concluídas)",
+      "Ação: Cancelar Projeto (muda status para 'Cancelado', cancela tarefas)",
+      "Ação: Aprovar Tarefa (muda status para 'Aprovada')",
+      "Side effects: Ao mudar tarefa, atualizar projeto pai"
+    ],
+    "regras_negocio": [
+      "Status de Projeto: Planejamento, Em Andamento, Concluído, Cancelado, Em Pausa",
+      "Status de Tarefa: Nova, Em Andamento, Concluída, Aprovada, Rejeitada",
+      "Transições de status permitidas para Projeto:",
+      "  - Planejamento → Em Andamento, Cancelado",
+      "  - Em Andamento → Concluído, Cancelado, Em Pausa",
+      "  - Em Pausa → Em Andamento, Cancelado",
+      "  - Concluído e Cancelado são finais (sem transição)",
+      "Data fim do projeto >= Data início + 1 dia",
+      "Data fim da tarefa >= Data início",
+      "Orçamento do projeto > 0",
+      "Horas estimadas da tarefa > 0",
+      "Horas realizadas <= Horas estimadas * 2 (alerta se ultrapassar)",
+      "Responsável do projeto deve existir em tabela de usuários (ZHR_USERS ou ADDR3_VAL)",
+      "Projeto só pode ser concluído se todas tarefas estiverem Concluídas ou Aprovadas",
+      "Projeto só pode ser excluído se status = Planejamento",
+      "Tarefa só pode ser excluída se status = Nova",
+      "Percentual de conclusão = (Tarefas Concluídas / Total de Tarefas) * 100"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "ZPROJECTS",
+        "descricao": "Tabela customizada de projetos",
+        "tipo": "ZTABLE",
+        "campos_usados": [
+          "CLIENT",
+          "PROJECT_ID",
+          "PROJECT_NAME",
+          "DESCRIPTION",
+          "START_DATE",
+          "END_DATE",
+          "STATUS",
+          "MANAGER_ID",
+          "BUDGET",
+          "COMPLETION_PCT",
+          "CREATED_BY",
+          "CREATED_AT",
+          "LAST_CHANGED_BY",
+          "LAST_CHANGED_AT",
+          "LOCAL_LAST_CHANGED_AT"
+        ]
+      },
+      {
+        "nome_tabela": "ZTASKS",
+        "descricao": "Tabela customizada de tarefas",
+        "tipo": "ZTABLE",
+        "campos_usados": [
+          "CLIENT",
+          "PROJECT_ID",
+          "TASK_ID",
+          "TASK_NAME",
+          "DESCRIPTION",
+          "ASSIGNED_TO",
+          "START_DATE",
+          "END_DATE",
+          "STATUS",
+          "ESTIMATED_HOURS",
+          "ACTUAL_HOURS",
+          "CREATED_BY",
+          "CREATED_AT",
+          "LAST_CHANGED_BY",
+          "LAST_CHANGED_AT",
+          "LOCAL_LAST_CHANGED_AT"
+        ]
+      },
+      {
+        "nome_tabela": "ZHR_USERS",
+        "descricao": "Tabela customizada de usuários/colaboradores",
+        "tipo": "ZTABLE",
+        "campos_usados": ["USER_ID", "USER_NAME", "EMAIL", "DEPARTMENT", "ACTIVE"]
+      }
+    ],
+    "campos": [],
+    "funcoes_modulos": [],
+    "contexto_especifico": {
+      "versao_rap": "managed",
+      "tipo_app": "list_report_object_page",
+      "entidades": [
+        {
+          "nome": "Projects",
+          "tabela_base": "ZPROJECTS",
+          "draft_enabled": true,
+          "etag_field": "LOCAL_LAST_CHANGED_AT"
+        },
+        {
+          "nome": "Tasks",
+          "tabela_base": "ZTASKS",
+          "draft_enabled": true,
+          "parent": "Projects",
+          "association": "_Tasks"
+        }
+      ],
+      "acoes": [
+        {
+          "nome": "startProject",
+          "entidade": "Projects",
+          "descricao": "Iniciar projeto (muda status para Em Andamento)"
+        },
+        {
+          "nome": "completeProject",
+          "entidade": "Projects",
+          "descricao": "Concluir projeto (valida tarefas e muda status)"
+        },
+        {
+          "nome": "cancelProject",
+          "entidade": "Projects",
+          "descricao": "Cancelar projeto"
+        },
+        {
+          "nome": "approveTask",
+          "entidade": "Tasks",
+          "descricao": "Aprovar tarefa"
+        }
+      ],
+      "validacoes": [
+        "validateDates",
+        "validateStatus",
+        "validateBudget",
+        "validateManager",
+        "validateTaskCompletion"
+      ],
+      "determinacoes": [
+        "determineStatus",
+        "calculateCompletionPercentage",
+        "calculateTotalHours"
+      ],
+      "side_effects": [
+        "Ao mudar tarefa, recalcular completion_pct do projeto pai"
+      ]
+    }
+  },
+  "instrucoes_teste": [
+    "1. Copie o conteúdo de 'formData' acima",
+    "2. Cole no formulário do AbapModal (modo manual)",
+    "3. Gere o código",
+    "4. Verifique se a IA gerou os seguintes artefatos:",
+    "   - ZI_PROJECT (CDS_VIEW) - Interface View para Projects",
+    "   - ZI_TASK (CDS_VIEW) - Interface View para Tasks",
+    "   - ZC_PROJECT (CDS_VIEW) - Consumption/Projection View para Projects",
+    "   - ZC_TASK (CDS_VIEW) - Consumption/Projection View para Tasks",
+    "   - ZR_PROJECT (BEHAVIOR_DEFINITION) - Behavior Definition para Projects",
+    "   - ZBP_I_PROJECT (BEHAVIOR_IMPLEMENTATION) - Behavior Pool Implementation",
+    "   - ZUI_PROJECT_O4 (SERVICE_DEFINITION) - Service Definition",
+    "   - ZUI_PROJECT_O4 (SERVICE_BINDING) - Service Binding (OData V4)",
+    "   - Z_C_PROJECT (METADATA_EXTENSION) - Anotações UI para Projects",
+    "   - Z_C_TASK (METADATA_EXTENSION) - Anotações UI para Tasks",
+    "5. Valide que:",
+    "   - CDS Interface Views (ZI_) têm anotações @AbapCatalog e @AccessControl",
+    "   - CDS Consumption Views (ZC_) têm provider contract",
+    "   - Behavior Definition tem operações CRUD + ações customizadas",
+    "   - Behavior Implementation tem métodos de validação, determinação e ações",
+    "   - Service Definition expõe as entidades corretas",
+    "   - Service Binding é do tipo OData V4 UI",
+    "   - Metadata Extensions têm anotações UI (lineItem, fieldGroup, headerInfo)",
+    "   - Associação entre Projects e Tasks está definida"
+  ],
+  "resultado_esperado": {
+    "total_arquivos_min": 8,
+    "total_arquivos_max": 12,
+    "complexidade": "alta",
+    "deve_conter": [
+      "CDS Interface Views com anotações VDM",
+      "CDS Consumption Views com provider contract",
+      "Associação composition entre Projects e Tasks",
+      "Behavior Definition managed com draft",
+      "Validações (validate xxx)",
+      "Determinações (determine xxx)",
+      "Ações customizadas (action xxx)",
+      "Behavior Implementation Class (ZBP_I_xxx)",
+      "Métodos de validação implementados",
+      "Métodos de determinação implementados",
+      "Métodos de ação implementados",
+      "Service Definition expondo entidades",
+      "Service Binding OData V4",
+      "Metadata Extensions com UI annotations",
+      "@UI.lineItem, @UI.fieldGroup, @UI.headerInfo"
+    ]
+  }
+}

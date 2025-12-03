@@ -1,0 +1,224 @@
+{
+  "titulo": "Teste 3: Classe ABAP OO - Gerenciador de Estoque",
+  "descricao": "Este teste valida se a IA consegue gerar uma CLASS completa subdividida em: CLASS_DEFINITION, CLASS_IMPLEMENTATION, UNIT_TEST",
+  "tipo_teste": "CLASS",
+  "complexidade_esperada": "media",
+  "artefatos_esperados": [
+    "CLASS_DEFINITION",
+    "CLASS_IMPLEMENTATION",
+    "UNIT_TEST"
+  ],
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "CLASS",
+    "nome_programa": "ZCL_INVENTORY_MANAGER",
+    "objetivo": "Classe para gerenciar operações de estoque (consulta, reserva, movimentação, transferência) com validações, cálculos e integração com BAPIs SAP",
+    "logica_negocio": "A classe deve encapsular toda lógica de gerenciamento de estoque. Deve permitir consultar saldo disponível por material e centro, reservar quantidade para pedido de venda, efetuar movimentações de entrada/saída, transferir entre centros/depósitos, calcular estoque médio e projetado, validar se há estoque suficiente, e integrar com BAPIs de movimento de mercadorias (BAPI_GOODSMVT_CREATE). Deve ter tratamento de exceções customizadas, log de erros, e métodos públicos bem definidos com interface clara.",
+    "processos": [
+      "Consultar saldo de estoque (MARD) por material, centro e depósito",
+      "Verificar disponibilidade considerando reservas (RESB)",
+      "Reservar quantidade para pedido (criar entrada em RESB)",
+      "Liberar reserva (cancelar entrada em RESB)",
+      "Movimentar entrada (tipo movimento 501)",
+      "Movimentar saída (tipo movimento 601)",
+      "Transferir entre depósitos (tipo movimento 311)",
+      "Transferir entre centros (tipo movimento 301)",
+      "Calcular estoque médio dos últimos N meses",
+      "Calcular estoque projetado (atual + pedidos - vendas)",
+      "Validar se material existe e está ativo",
+      "Validar se centro/depósito existem",
+      "Log de todas operações em tabela customizada",
+      "Tratamento de erros com exceções customizadas"
+    ],
+    "regras_negocio": [
+      "Estoque não pode ficar negativo em operações de saída",
+      "Reserva só pode ser feita se houver estoque disponível >= quantidade",
+      "Material deve estar ativo (MARA-LVORM = ' ')",
+      "Centro deve existir na tabela T001W",
+      "Depósito deve existir na tabela T001L",
+      "Reserva tem validade de 30 dias (excluir automaticamente após vencimento)",
+      "Movimentação deve criar documento de material (MKPF/MSEG)",
+      "Transferência entre centros requer autorização S_TCODE",
+      "Cálculo de estoque médio: somatório dos últimos N meses / N",
+      "Estoque projetado: Estoque Atual + Em Trânsito - Reservado - Pedidos Abertos"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "MARA",
+        "descricao": "Dados gerais de material",
+        "tipo": "STANDARD",
+        "campos_usados": ["MATNR", "MEINS", "MTART", "LVORM", "MATKL"]
+      },
+      {
+        "nome_tabela": "MARD",
+        "descricao": "Dados de estoque por depósito",
+        "tipo": "STANDARD",
+        "campos_usados": ["MATNR", "WERKS", "LGORT", "LABST", "INSME", "SPEME"]
+      },
+      {
+        "nome_tabela": "RESB",
+        "descricao": "Reservas de material",
+        "tipo": "STANDARD",
+        "campos_usados": ["RSNUM", "RSPOS", "MATNR", "WERKS", "LGORT", "BDMNG", "ENMNG", "BDTER"]
+      },
+      {
+        "nome_tabela": "MKPF",
+        "descricao": "Cabeçalho de documento de material",
+        "tipo": "STANDARD",
+        "campos_usados": ["MBLNR", "MJAHR", "BLDAT", "BUDAT", "BKTXT"]
+      },
+      {
+        "nome_tabela": "MSEG",
+        "descricao": "Segmento de documento de material",
+        "tipo": "STANDARD",
+        "campos_usados": ["MBLNR", "MJAHR", "ZEILE", "BWART", "MATNR", "WERKS", "LGORT", "MENGE", "MEINS"]
+      },
+      {
+        "nome_tabela": "T001W",
+        "descricao": "Centros",
+        "tipo": "STANDARD",
+        "campos_usados": ["WERKS", "NAME1"]
+      },
+      {
+        "nome_tabela": "T001L",
+        "descricao": "Depósitos",
+        "tipo": "STANDARD",
+        "campos_usados": ["WERKS", "LGORT", "LGOBE"]
+      }
+    ],
+    "campos": [],
+    "funcoes_modulos": [
+      {
+        "nome": "BAPI_GOODSMVT_CREATE",
+        "tipo": "BAPI",
+        "descricao": "BAPI para criar movimentos de mercadorias",
+        "parametros": "GOODSMVT_HEADER, GOODSMVT_CODE, GOODSMVT_ITEM, RETURN, MATERIALDOCUMENT, MATDOCUMENTYEAR"
+      },
+      {
+        "nome": "BAPI_TRANSACTION_COMMIT",
+        "tipo": "BAPI",
+        "descricao": "Commit de transação para BAPIs",
+        "parametros": "WAIT"
+      },
+      {
+        "nome": "BAPI_TRANSACTION_ROLLBACK",
+        "tipo": "BAPI",
+        "descricao": "Rollback de transação para BAPIs",
+        "parametros": ""
+      },
+      {
+        "nome": "MD_STOCK_REQUIREMENTS_LIST_API",
+        "tipo": "FM",
+        "descricao": "Consultar necessidades de estoque",
+        "parametros": "MATNR, WERKS, STOCK_REQUIREMENTS"
+      }
+    ],
+    "contexto_especifico": {
+      "tipo_classe": "normal",
+      "heranca": "",
+      "interfaces": [],
+      "metodos_publicos": [
+        {
+          "nome": "GET_STOCK_BALANCE",
+          "descricao": "Consultar saldo de estoque",
+          "importing": ["IV_MATNR TYPE MATNR", "IV_WERKS TYPE WERKS_D", "IV_LGORT TYPE LGORT_D"],
+          "returning": "RV_LABST TYPE LABST"
+        },
+        {
+          "nome": "CHECK_AVAILABILITY",
+          "descricao": "Verificar se há estoque disponível",
+          "importing": ["IV_MATNR TYPE MATNR", "IV_WERKS TYPE WERKS_D", "IV_LGORT TYPE LGORT_D", "IV_MENGE TYPE MENGE_D"],
+          "returning": "RV_AVAILABLE TYPE ABAP_BOOL"
+        },
+        {
+          "nome": "RESERVE_STOCK",
+          "descricao": "Reservar quantidade de estoque",
+          "importing": ["IV_MATNR TYPE MATNR", "IV_WERKS TYPE WERKS_D", "IV_LGORT TYPE LGORT_D", "IV_MENGE TYPE MENGE_D", "IV_VBELN TYPE VBELN_VA"],
+          "exporting": ["EV_RSNUM TYPE RSNUM"]
+        },
+        {
+          "nome": "RELEASE_RESERVATION",
+          "descricao": "Liberar reserva de estoque",
+          "importing": ["IV_RSNUM TYPE RSNUM", "IV_RSPOS TYPE RSPOS"]
+        },
+        {
+          "nome": "POST_GOODS_MOVEMENT",
+          "descricao": "Lançar movimento de mercadorias",
+          "importing": ["IV_BWART TYPE BWART", "IV_MATNR TYPE MATNR", "IV_WERKS TYPE WERKS_D", "IV_LGORT TYPE LGORT_D", "IV_MENGE TYPE MENGE_D"],
+          "exporting": ["EV_MBLNR TYPE MBLNR", "EV_MJAHR TYPE MJAHR"]
+        },
+        {
+          "nome": "TRANSFER_STOCK",
+          "descricao": "Transferir estoque entre depósitos/centros",
+          "importing": ["IV_MATNR TYPE MATNR", "IV_WERKS_FROM TYPE WERKS_D", "IV_LGORT_FROM TYPE LGORT_D", "IV_WERKS_TO TYPE WERKS_D", "IV_LGORT_TO TYPE LGORT_D", "IV_MENGE TYPE MENGE_D"],
+          "exporting": ["EV_MBLNR TYPE MBLNR"]
+        },
+        {
+          "nome": "CALCULATE_AVERAGE_STOCK",
+          "descricao": "Calcular estoque médio dos últimos N meses",
+          "importing": ["IV_MATNR TYPE MATNR", "IV_WERKS TYPE WERKS_D", "IV_MONTHS TYPE I"],
+          "returning": "RV_AVERAGE TYPE LABST"
+        },
+        {
+          "nome": "CALCULATE_PROJECTED_STOCK",
+          "descricao": "Calcular estoque projetado",
+          "importing": ["IV_MATNR TYPE MATNR", "IV_WERKS TYPE WERKS_D"],
+          "returning": "RV_PROJECTED TYPE LABST"
+        }
+      ],
+      "atributos": [
+        {
+          "nome": "GT_STOCK_LOG",
+          "tipo": "TT_STOCK_LOG",
+          "visibilidade": "private",
+          "read_only": false
+        },
+        {
+          "nome": "GV_SIMULATION_MODE",
+          "tipo": "ABAP_BOOL",
+          "visibilidade": "private",
+          "read_only": false
+        }
+      ],
+      "exceptions": [
+        "ZCX_STOCK_NOT_AVAILABLE",
+        "ZCX_INVALID_MATERIAL",
+        "ZCX_INVALID_PLANT",
+        "ZCX_MOVEMENT_FAILED"
+      ]
+    }
+  },
+  "instrucoes_teste": [
+    "1. Copie o conteúdo de 'formData' acima",
+    "2. Cole no formulário do AbapModal (modo manual)",
+    "3. Gere o código",
+    "4. Verifique se a IA gerou os seguintes artefatos:",
+    "   - ZCL_INVENTORY_MANAGER (CLASS_DEFINITION)",
+    "   - ZCL_INVENTORY_MANAGER (CLASS_IMPLEMENTATION)",
+    "   - ZCL_INVENTORY_MANAGER_TEST ou LTC_INVENTORY_MANAGER (UNIT_TEST)",
+    "5. Valide que:",
+    "   - Definição tem seções PUBLIC, PROTECTED, PRIVATE",
+    "   - Todos os métodos públicos especificados estão implementados",
+    "   - Atributos estão declarados na seção correta",
+    "   - Implementação tem lógica de validação e tratamento de erros",
+    "   - Classe de teste tem métodos de teste para métodos principais",
+    "   - Usa TRY-CATCH para exceções",
+    "   - Chamadas a BAPIs estão corretas (CREATE + COMMIT)"
+  ],
+  "resultado_esperado": {
+    "total_arquivos_min": 2,
+    "total_arquivos_max": 4,
+    "complexidade": "media",
+    "deve_conter": [
+      "CLASS DEFINITION com PUBLIC SECTION, PROTECTED SECTION, PRIVATE SECTION",
+      "Declaração de todos os métodos públicos",
+      "Declaração de atributos privados",
+      "CLASS IMPLEMENTATION com implementação de cada método",
+      "Validações em cada método (material, centro, depósito)",
+      "Chamadas a BAPIs com tratamento de retorno",
+      "Classe de teste com UNIT_TEST",
+      "Métodos de teste: SETUP, TEARDOWN, TEST_xxx",
+      "Uso de CL_ABAP_UNIT_ASSERT"
+    ]
+  }
+}

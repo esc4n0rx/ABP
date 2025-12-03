@@ -194,17 +194,82 @@ export const TIPOS_FUNCAO_MODULO = [
   { value: 'MACRO', label: 'Macro' },
 ] as const
 
+// Tipos de artefatos ABAP que podem ser gerados
+export enum TipoArtefatoABAP {
+  // Programas
+  MAIN_PROGRAM = 'MAIN_PROGRAM',
+  SUBROUTINE_POOL = 'SUBROUTINE_POOL',
+
+  // Includes
+  INCLUDE_TOP = 'INCLUDE_TOP',
+  INCLUDE_FORMS = 'INCLUDE_FORMS',
+  INCLUDE_MODULES = 'INCLUDE_MODULES',
+  INCLUDE_EVENTS = 'INCLUDE_EVENTS',
+  INCLUDE_CLASS = 'INCLUDE_CLASS',
+
+  // Classes
+  CLASS_DEFINITION = 'CLASS_DEFINITION',
+  CLASS_IMPLEMENTATION = 'CLASS_IMPLEMENTATION',
+  CLASS_LOCAL = 'CLASS_LOCAL',
+
+  // Telas e Interfaces
+  SCREEN = 'SCREEN',
+  SCREEN_LOGIC = 'SCREEN_LOGIC',
+  SELECTION_SCREEN = 'SELECTION_SCREEN',
+
+  // CDS e Views
+  CDS_VIEW = 'CDS_VIEW',
+  CDS_TABLE_FUNCTION = 'CDS_TABLE_FUNCTION',
+
+  // Function Modules
+  FUNCTION_GROUP = 'FUNCTION_GROUP',
+  FUNCTION_MODULE = 'FUNCTION_MODULE',
+  FUNCTION_INCLUDE = 'FUNCTION_INCLUDE',
+
+  // Formulários
+  SMARTFORM = 'SMARTFORM',
+  SMARTFORM_FUNCTION = 'SMARTFORM_FUNCTION',
+  ADOBE_FORM = 'ADOBE_FORM',
+  SAPSCRIPT = 'SAPSCRIPT',
+
+  // Outros
+  TYPE_POOL = 'TYPE_POOL',
+  INTERFACE = 'INTERFACE',
+  TABLE_TYPE = 'TABLE_TYPE',
+  STRUCTURE = 'STRUCTURE',
+
+  // BADIs e Enhancements
+  BADI_IMPLEMENTATION = 'BADI_IMPLEMENTATION',
+  ENHANCEMENT_IMPLEMENTATION = 'ENHANCEMENT_IMPLEMENTATION',
+
+  // Testes
+  UNIT_TEST = 'UNIT_TEST',
+  TEST_DATA = 'TEST_DATA',
+
+  // RAP/Fiori
+  BEHAVIOR_DEFINITION = 'BEHAVIOR_DEFINITION',
+  BEHAVIOR_IMPLEMENTATION = 'BEHAVIOR_IMPLEMENTATION',
+  METADATA_EXTENSION = 'METADATA_EXTENSION',
+  SERVICE_DEFINITION = 'SERVICE_DEFINITION',
+  SERVICE_BINDING = 'SERVICE_BINDING',
+}
+
+// Código adicional com tipo enum e campos estendidos
+export interface CodigoAdicional {
+  tipo: TipoArtefatoABAP
+  nome: string
+  codigo: string
+  descricao?: string
+  linhas?: number
+  tamanho_kb?: number
+  dependencias?: string[]
+  usado_por?: string[]
+  ordem_criacao?: number
+}
+
 export interface CodigoGerado {
-
   codigo_principal: string
-
-  
-  codigos_adicionais?: Array<{
-    tipo: string 
-    nome: string
-    codigo: string
-    descricao?: string
-  }>
+  codigos_adicionais?: CodigoAdicional[]
 
   documentacao?: {
     descricao_geral: string
@@ -229,9 +294,45 @@ export interface CodigoGerado {
 
   testes_sugeridos?: string[]
 
+  // Novos campos para estrutura e visualização
+  estrutura?: EstruturaCodigo
+
   gerado_em?: string
   modelo_usado?: string
   versao?: string
+}
+
+// Estrutura hierárquica do código gerado
+export interface EstruturaCodigo {
+  tipo_programa: TipoProgramaABAP
+  arvore_arquivos: ArquivoNode[]
+  grafo_dependencias?: GrafoDependencias
+  ordem_criacao: string[]
+  instrucoes_instalacao: string[]
+}
+
+// Node da árvore de arquivos
+export interface ArquivoNode {
+  id: string
+  nome: string
+  tipo: TipoArtefatoABAP
+  isPrincipal: boolean
+  linhas?: number
+  children?: ArquivoNode[]
+}
+
+// Grafo de dependências entre artefatos
+export interface GrafoDependencias {
+  nodes: Array<{
+    id: string
+    label: string
+    tipo: TipoArtefatoABAP
+  }>
+  edges: Array<{
+    from: string
+    to: string
+    tipo: 'inclui' | 'usa' | 'implementa' | 'herda'
+  }>
 }
 
 export interface PerguntaIA {
@@ -441,4 +542,183 @@ export function getTipoProgramaLabel(tipo: TipoProgramaABAP): string {
 export function getTipoProgramaCategoria(tipo: TipoProgramaABAP): string {
   const found = TIPOS_PROGRAMA_ABAP.find(t => t.value === tipo)
   return found?.categoria || 'others'
+}
+
+// Mapeamento de tipos de programa para artefatos esperados
+export interface ArtefatoEsperado {
+  tipo: TipoArtefatoABAP
+  descricao: string
+  obrigatorio: boolean
+}
+
+export const ARTEFATOS_POR_TIPO_PROGRAMA: Record<TipoProgramaABAP, ArtefatoEsperado[]> = {
+  REPORT: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_TOP, descricao: 'Declarações globais (TABLES, DATA, TYPES)', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Subroutines e forms', obrigatorio: false },
+  ],
+  ALV_REPORT: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa principal com chamada ALV', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_TOP, descricao: 'Declarações globais e estruturas', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.CLASS_LOCAL, descricao: 'Classe para eventos ALV (se interativo)', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Forms de processamento', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.SELECTION_SCREEN, descricao: 'Definição de tela de seleção customizada', obrigatorio: false },
+  ],
+  INTERACTIVE_REPORT: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_TOP, descricao: 'Declarações', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_EVENTS, descricao: 'AT LINE-SELECTION, TOP-OF-PAGE, etc.', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.CLASS_LOCAL, descricao: 'Classe de processamento', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Subroutines', obrigatorio: false },
+  ],
+  CLASS: [
+    { tipo: TipoArtefatoABAP.CLASS_DEFINITION, descricao: 'Definição da classe (pública)', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_IMPLEMENTATION, descricao: 'Implementação da classe', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.UNIT_TEST, descricao: 'Classe de teste unitário', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.TEST_DATA, descricao: 'Dados de teste', obrigatorio: false },
+  ],
+  FUNCTION_MODULE: [
+    { tipo: TipoArtefatoABAP.FUNCTION_MODULE, descricao: 'Function module principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.FUNCTION_INCLUDE, descricao: 'Include top do function group (se novo)', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Include de forms (se necessário)', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.TABLE_TYPE, descricao: 'Definição de tipos de tabela customizados', obrigatorio: false },
+  ],
+  CDS_VIEW: [
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'Definição da CDS View principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'CDS Views auxiliares (associações)', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.TABLE_TYPE, descricao: 'Tipos estruturados (se necessário)', obrigatorio: false },
+  ],
+  DIALOG_PROGRAM: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_TOP, descricao: 'Declarações globais', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.SCREEN, descricao: 'Screen 100 (e outras)', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.SCREEN_LOGIC, descricao: 'PBO/PAI de cada tela', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_MODULES, descricao: 'Módulos PBO (O01) e PAI (I01)', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Subroutines', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.CLASS_LOCAL, descricao: 'Classes auxiliares', obrigatorio: false },
+  ],
+  MODULE_POOL: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_TOP, descricao: 'Declarações globais', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.SCREEN, descricao: 'Screens', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.SCREEN_LOGIC, descricao: 'Lógica PBO/PAI', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_MODULES, descricao: 'Módulos de tela', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Subroutines', obrigatorio: false },
+  ],
+  BADI: [
+    { tipo: TipoArtefatoABAP.BADI_IMPLEMENTATION, descricao: 'Implementação da interface', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_DEFINITION, descricao: 'Classe de implementação', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_IMPLEMENTATION, descricao: 'Métodos implementados', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.UNIT_TEST, descricao: 'Testes da implementação', obrigatorio: false },
+  ],
+  SMARTFORM: [
+    { tipo: TipoArtefatoABAP.SMARTFORM, descricao: 'Definição do formulário', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.SMARTFORM_FUNCTION, descricao: 'Function module gerado', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa de teste/exemplo', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.STRUCTURE, descricao: 'Estruturas de dados customizadas', obrigatorio: false },
+  ],
+  FIORI_ELEMENTS: [
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'Interface View', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'Consumption View', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'Projection View', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.BEHAVIOR_DEFINITION, descricao: 'Behavior Definition', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.BEHAVIOR_IMPLEMENTATION, descricao: 'Behavior Implementation', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.METADATA_EXTENSION, descricao: 'Anotações UI', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.SERVICE_DEFINITION, descricao: 'Definição do serviço', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.SERVICE_BINDING, descricao: 'Binding OData', obrigatorio: true },
+  ],
+  RAP: [
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'Interface View', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CDS_VIEW, descricao: 'Consumption/Projection View', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.BEHAVIOR_DEFINITION, descricao: 'Behavior Definition', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.BEHAVIOR_IMPLEMENTATION, descricao: 'Behavior Implementation Class', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.SERVICE_DEFINITION, descricao: 'Service Definition', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.SERVICE_BINDING, descricao: 'Service Binding', obrigatorio: true },
+  ],
+  BDC: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa BDC principal', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.INCLUDE_TOP, descricao: 'Declarações e estruturas', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.CLASS_LOCAL, descricao: 'Classe de processamento BDC', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Forms para leitura e geração BDC', obrigatorio: false },
+    { tipo: TipoArtefatoABAP.STRUCTURE, descricao: 'Estrutura de dados do arquivo', obrigatorio: false },
+  ],
+  // Tipos restantes com configuração padrão simples
+  AMDP: [
+    { tipo: TipoArtefatoABAP.CLASS_DEFINITION, descricao: 'Classe AMDP', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_IMPLEMENTATION, descricao: 'Implementação com SQLScript', obrigatorio: true },
+  ],
+  RFC_FUNCTION: [
+    { tipo: TipoArtefatoABAP.FUNCTION_MODULE, descricao: 'RFC Function Module', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.FUNCTION_INCLUDE, descricao: 'Include do function group', obrigatorio: false },
+  ],
+  INTERFACE: [
+    { tipo: TipoArtefatoABAP.INTERFACE, descricao: 'Interface ABAP', obrigatorio: true },
+  ],
+  ENHANCEMENT: [
+    { tipo: TipoArtefatoABAP.ENHANCEMENT_IMPLEMENTATION, descricao: 'Enhancement Implementation', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_LOCAL, descricao: 'Classe de implementação', obrigatorio: false },
+  ],
+  USER_EXIT: [
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Include com form do user exit', obrigatorio: true },
+  ],
+  BTE: [
+    { tipo: TipoArtefatoABAP.FUNCTION_MODULE, descricao: 'Function Module BTE', obrigatorio: true },
+  ],
+  WORKFLOW: [
+    { tipo: TipoArtefatoABAP.CLASS_DEFINITION, descricao: 'Classe de workflow', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_IMPLEMENTATION, descricao: 'Implementação', obrigatorio: true },
+  ],
+  ADOBE_FORM: [
+    { tipo: TipoArtefatoABAP.ADOBE_FORM, descricao: 'Adobe Form Interface', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa de teste', obrigatorio: false },
+  ],
+  SAPSCRIPT: [
+    { tipo: TipoArtefatoABAP.SAPSCRIPT, descricao: 'SAPScript Form', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa de impressão', obrigatorio: false },
+  ],
+  LSMW: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa LSMW', obrigatorio: true },
+  ],
+  IDOC: [
+    { tipo: TipoArtefatoABAP.FUNCTION_MODULE, descricao: 'Function Module de processamento', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_LOCAL, descricao: 'Classe processadora', obrigatorio: false },
+  ],
+  WEBSERVICE: [
+    { tipo: TipoArtefatoABAP.CLASS_DEFINITION, descricao: 'Classe de Web Service', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_IMPLEMENTATION, descricao: 'Implementação', obrigatorio: true },
+  ],
+  ODATA_SERVICE: [
+    { tipo: TipoArtefatoABAP.CLASS_DEFINITION, descricao: 'Data Provider Class', obrigatorio: true },
+    { tipo: TipoArtefatoABAP.CLASS_IMPLEMENTATION, descricao: 'Implementação MPC/DPC', obrigatorio: true },
+  ],
+  INCLUDE: [
+    { tipo: TipoArtefatoABAP.INCLUDE_FORMS, descricao: 'Include Program', obrigatorio: true },
+  ],
+  SUBROUTINE: [
+    { tipo: TipoArtefatoABAP.SUBROUTINE_POOL, descricao: 'Subroutine Pool', obrigatorio: true },
+  ],
+  TYPE_POOL: [
+    { tipo: TipoArtefatoABAP.TYPE_POOL, descricao: 'Type Pool', obrigatorio: true },
+  ],
+  OTHERS: [
+    { tipo: TipoArtefatoABAP.MAIN_PROGRAM, descricao: 'Programa', obrigatorio: true },
+  ],
+}
+
+// Função helper para obter artefatos esperados por tipo de programa
+export function getArtefatosEsperados(tipo: TipoProgramaABAP): ArtefatoEsperado[] {
+  return ARTEFATOS_POR_TIPO_PROGRAMA[tipo] || []
+}
+
+// Função helper para gerar descrição dos artefatos para o prompt
+export function getDescricaoArtefatosPrompt(tipo: TipoProgramaABAP): string {
+  const artefatos = getArtefatosEsperados(tipo)
+  if (artefatos.length === 0) return 'Nenhum artefato específico definido.'
+
+  return artefatos
+    .map((art, idx) => {
+      const badge = art.obrigatorio ? '[OBRIGATÓRIO]' : '[OPCIONAL]'
+      return `${idx + 1}. **${art.tipo}** ${badge}: ${art.descricao}`
+    })
+    .join('\n')
 }

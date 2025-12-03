@@ -2,7 +2,9 @@ import {
   AbapFormData,
   TipoProgramaABAP,
   getTipoProgramaLabel,
-  TIPOS_PROGRAMA_ABAP
+  TIPOS_PROGRAMA_ABAP,
+  getDescricaoArtefatosPrompt,
+  TipoArtefatoABAP
 } from '@/types/abap'
 
 export function gerarPromptABAP(formData: AbapFormData): string {
@@ -117,6 +119,43 @@ Retorne APENAS um JSON válido neste formato:
 
 ### FORMATO 2: Quando TIVER contexto suficiente (Retornar Código)
 
+⚠️ **IMPORTANTE - SUBDIVISÃO INTELIGENTE DE CÓDIGO**
+
+Para programas do tipo **${tipoInfo?.label}**, você deve subdividir o código em múltiplos artefatos seguindo as boas práticas SAP:
+
+**Artefatos esperados para ${formData.tipo_programa}:**
+${getDescricaoArtefatosPrompt(formData.tipo_programa)}
+
+**REGRAS DE SUBDIVISÃO:**
+
+1. **codigo_principal**: SEMPRE o arquivo "main" ou mais importante
+   - REPORT/ALV_REPORT: O programa principal
+   - CLASS: A definição da classe
+   - CDS_VIEW: A view principal
+   - FUNCTION_MODULE: O function module
+   - DIALOG_PROGRAM/MODULE_POOL: O programa principal
+
+2. **codigos_adicionais**: TODOS os outros artefatos necessários
+   - Cada arquivo separado logicamente
+   - Nome seguindo convenção SAP (Z*, Y*, LCL_* para classes locais)
+   - Descrição clara do propósito de cada arquivo
+   - Use o campo "tipo" com um dos valores do enum: ${Object.values(TipoArtefatoABAP).slice(0, 10).join(', ')}...
+
+3. **Quando subdividir:**
+   - Se o programa é simples ,Como um Simples Report Pode manter tudo em codigo_principal
+   - Se o programa é complexo,SEMPRE subdivida logicamente
+   - Se há classes locais: Separe em CLASS_LOCAL
+   - Se há múltiplas forms: Separe em INCLUDE_FORMS
+   - Se há declarações extensas: Separe em INCLUDE_TOP
+   - Se há telas (MODULE_POOL): Separe em SCREEN e SCREEN_LOGIC
+
+**BENEFÍCIOS DA SUBDIVISÃO:**
+✅ Código organizado e modular
+✅ Fácil manutenção e reutilização
+✅ Segue boas práticas SAP
+✅ Facilita versionamento
+✅ Melhor compreensão da estrutura
+
 Retorne APENAS um JSON válido neste formato:
 
 \`\`\`json
@@ -125,10 +164,22 @@ Retorne APENAS um JSON válido neste formato:
   "codigo_principal": "* Código ABAP completo aqui\\nREPORT z_programa.\\n\\n...",
   "codigos_adicionais": [
     {
-      "tipo": "include",
-      "nome": "ZINC_FORMS",
-      "codigo": "* Include com forms\\nFORM validar_dados...\\nENDFORM.",
-      "descricao": "Include com subroutines de validação"
+      "tipo": "INCLUDE_TOP",
+      "nome": "ZINC_TOP",
+      "codigo": "* Include com declarações globais\\nTABLES: mara, marc.\\nDATA: ...",
+      "descricao": "Include com todas as declarações globais do programa",
+      "linhas": 45,
+      "dependencias": [],
+      "usado_por": ["Z_PROGRAMA_PRINCIPAL"]
+    },
+    {
+      "tipo": "CLASS_LOCAL",
+      "nome": "LCL_PROCESSOR",
+      "codigo": "CLASS lcl_processor DEFINITION.\\n...\\nENDCLASS.\\n\\nCLASS lcl_processor IMPLEMENTATION.\\n...\\nENDCLASS.",
+      "descricao": "Classe local para processamento de dados",
+      "linhas": 120,
+      "dependencias": ["ZINC_TOP"],
+      "usado_por": ["Z_PROGRAMA_PRINCIPAL"]
     }
   ],
   "documentacao": {
