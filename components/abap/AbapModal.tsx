@@ -1,3 +1,5 @@
+// components/abap/AbapModal.tsx
+
 "use client"
 
 import { useState, useRef } from "react"
@@ -493,7 +495,8 @@ export function AbapModal({ open, onClose, onProgramaGerado }: AbapModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] p-0 gap-0 flex flex-col">
+      {/* AQUI FOI ADICIONADO O ! PARA FORÇAR A LARGURA E ALTURA */}
+      <DialogContent className="!max-w-[95vw] !w-[95vw] !max-h-[95vh] !h-[95vh] p-0 gap-0 flex flex-col">
         {/* Header fixo */}
         <DialogHeader className="px-8 py-6 border-b bg-gradient-to-r from-geo-primary/5 to-purple-50 shrink-0">
           <DialogTitle className="flex items-center gap-3 text-2xl">

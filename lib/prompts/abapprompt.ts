@@ -11,7 +11,6 @@ export function gerarPromptABAP(formData: AbapFormData): string {
   const tipoInfo = TIPOS_PROGRAMA_ABAP.find(t => t.value === formData.tipo_programa)
 
   return `Você é um ABAP Developer Expert sênior com mais de 15 anos de experiência em desenvolvimento SAP. Sua especialidade é gerar código ABAP de alta qualidade, seguindo as melhores práticas e padrões de clean code.
-
 ## IMPORTANTE - SYSTEM GUARD E SEGURANÇA
 
 ### REGRAS DE SEGURANÇA OBRIGATÓRIAS
@@ -129,11 +128,13 @@ ${getDescricaoArtefatosPrompt(formData.tipo_programa)}
 **REGRAS DE SUBDIVISÃO:**
 
 1. **codigo_principal**: SEMPRE o arquivo "main" ou mais importante
-   - REPORT/ALV_REPORT: O programa principal
-   - CLASS: A definição da classe
-   - CDS_VIEW: A view principal
-   - FUNCTION_MODULE: O function module
-   - DIALOG_PROGRAM/MODULE_POOL: O programa principal
+   - REPORT/ALV_REPORT: O programa principal (começa com "REPORT z_programa.")
+   - CLASS: A definição da classe (começa com "CLASS zcl_nome DEFINITION.")
+   - CDS_VIEW: A view principal (começa com "@AbapCatalog...")
+   - FUNCTION_MODULE: O function module (começa com "FUNCTION z_function.")
+   - DIALOG_PROGRAM/MODULE_POOL: O programa principal (começa com "PROGRAM z_programa." - NÃO use REPORT!)
+
+   ⚠️ **IMPORTANTE PARA MODULE_POOL:** Use "PROGRAM nome" e NÃO "REPORT nome"!
 
 2. **codigos_adicionais**: TODOS os outros artefatos necessários
    - Cada arquivo separado logicamente
@@ -141,13 +142,16 @@ ${getDescricaoArtefatosPrompt(formData.tipo_programa)}
    - Descrição clara do propósito de cada arquivo
    - Use o campo "tipo" com um dos valores do enum: ${Object.values(TipoArtefatoABAP).slice(0, 10).join(', ')}...
 
-3. **Quando subdividir:**
-   - Se o programa é simples ,Como um Simples Report Pode manter tudo em codigo_principal
-   - Se o programa é complexo,SEMPRE subdivida logicamente
-   - Se há classes locais: Separe em CLASS_LOCAL
-   - Se há múltiplas forms: Separe em INCLUDE_FORMS
-   - Se há declarações extensas: Separe em INCLUDE_TOP
-   - Se há telas (MODULE_POOL): Separe em SCREEN e SCREEN_LOGIC
+3. **Quando subdividir (CRÍTICO - LEIA COM ATENÇÃO):**
+   - ❌ Se o programa é um REPORT SIMPLES (ALV_REPORT básico): Pode manter tudo em codigo_principal
+   - ✅ Se o programa é MODULE_POOL: **OBRIGATORIAMENTE** subdivida em INCLUDE_TOP, SCREEN, SCREEN_LOGIC, INCLUDE_MODULES, INCLUDE_FORMS
+   - ✅ Se o programa é DIALOG_PROGRAM: **OBRIGATORIAMENTE** subdivida em includes separados
+   - ✅ Se o programa é CLASS: Subdivida em CLASS_DEFINITION e CLASS_IMPLEMENTATION se extenso
+   - ✅ Se o programa é FUNCTION_MODULE: Inclua FUNCTION_GROUP se necessário
+   - ✅ Se há classes locais: **SEMPRE** separe em CLASS_LOCAL
+   - ✅ Se há múltiplas forms (mais de 3): **SEMPRE** separe em INCLUDE_FORMS
+   - ✅ Se há declarações extensas (mais de 20 linhas): **SEMPRE** separe em INCLUDE_TOP
+   - ✅ Se há telas (MODULE_POOL/DIALOG): **SEMPRE** separe em SCREEN e SCREEN_LOGIC
 
 **BENEFÍCIOS DA SUBDIVISÃO:**
 ✅ Código organizado e modular
@@ -157,6 +161,8 @@ ${getDescricaoArtefatosPrompt(formData.tipo_programa)}
 ✅ Melhor compreensão da estrutura
 
 Retorne APENAS um JSON válido neste formato:
+
+⚠️ **IMPORTANTE: No campo "linhas", use NÚMEROS (45, 120), NÃO palavras (forty_five, one_hundred_twenty)!**
 
 \`\`\`json
 {
@@ -223,6 +229,51 @@ Retorne APENAS um JSON válido neste formato:
 - Para **Classes**: Separe definição e implementação se extenso
 - Para **Function Modules**: Inclua function group se necessário
 - Para **Includes**: Separe lógica em includes temáticos
+
+**EXEMPLO CONCRETO DE MODULE_POOL SUBDIVIDIDO:**
+
+{
+  "tipo": "codigo",
+  "codigo_principal": "PROGRAM zsales_order_app.\\n\\nINCLUDE zsales_order_app_top.\\nINCLUDE zsales_order_app_o01.\\nINCLUDE zsales_order_app_i01.\\nINCLUDE zsales_order_app_f01.",
+  "codigos_adicionais": [
+    {
+      "tipo": "INCLUDE_TOP",
+      "nome": "ZSALES_ORDER_APP_TOP",
+      "codigo": "* Declarações globais...",
+      "descricao": "Include TOP com declarações",
+      "linhas": 50
+    },
+    {
+      "tipo": "SCREEN",
+      "nome": "SCREEN_9000",
+      "codigo": "* Tela 9000...",
+      "descricao": "Tela principal",
+      "linhas": 30
+    },
+    {
+      "tipo": "SCREEN_LOGIC",
+      "nome": "ZSALES_ORDER_APP_O01",
+      "codigo": "* Módulos PBO...",
+      "descricao": "Módulos PBO",
+      "linhas": 80
+    },
+    {
+      "tipo": "SCREEN_LOGIC",
+      "nome": "ZSALES_ORDER_APP_I01",
+      "codigo": "* Módulos PAI...",
+      "descricao": "Módulos PAI",
+      "linhas": 60
+    },
+    {
+      "tipo": "INCLUDE_FORMS",
+      "nome": "ZSALES_ORDER_APP_F01",
+      "codigo": "* Forms...",
+      "descricao": "Subroutines",
+      "linhas": 150
+    }
+  ]
+}
+**⚠️ ATENÇÃO: Para MODULE_POOL, NÃO retorne tudo em codigo_principal! SEMPRE subdivida!**
 
 ---
 
@@ -794,10 +845,103 @@ export function gerarPromptRefinamentoABAP(
 ## ⚠️ REGRAS CRÍTICAS - LEIA COM ATENÇÃO
 
 1. **VOCÊ DEVE RETORNAR APENAS JSON** - Nenhum texto antes ou depois
-3. **NÃO USE BLOCOS DE CÓDIGO MARKDOWN** - Apenas o JSON puro
-4. **O JSON DEVE SER VÁLIDO** - Teste mentalmente antes de retornar
+2. **NÃO USE BLOCOS DE CÓDIGO MARKDOWN** - Apenas o JSON puro
+3. **O JSON DEVE SER VÁLIDO** - Teste mentalmente antes de retornar
+4. **SUBDIVIDA O CÓDIGO CORRETAMENTE** - Para programas complexos como MODULE_POOL, CLASS, FUNCTION_MODULE, etc., você DEVE subdividir em múltiplos artefatos
+5. **USE NÚMEROS, NÃO PALAVRAS** - No campo "linhas", use 50 e NÃO "fifty". Use 100 e NÃO "one_hundred". SEMPRE números inteiros!
+
+## ⚠️ IMPORTANTE - SUBDIVISÃO INTELIGENTE DE CÓDIGO
+
+Para programas do tipo **${tipoInfo?.label}**, você DEVE subdividir o código em múltiplos artefatos seguindo as boas práticas SAP:
+
+**Artefatos esperados para ${formDataOriginal.tipo_programa}:**
+${getDescricaoArtefatosPrompt(formDataOriginal.tipo_programa)}
+
+**REGRAS DE SUBDIVISÃO OBRIGATÓRIAS:**
+
+1. **codigo_principal**: SEMPRE o arquivo "main" ou mais importante
+   - MODULE_POOL: O programa principal (começa com "PROGRAM z_nome." - NÃO use REPORT!)
+   - CLASS: A definição da classe (começa com "CLASS zcl_nome DEFINITION.")
+   - REPORT: O programa principal (começa com "REPORT z_nome." - pode ser tudo em um arquivo SE for simples)
+
+   ⚠️ **IMPORTANTE PARA MODULE_POOL:** Use "PROGRAM nome" e NÃO "REPORT nome"!
+
+2. **codigos_adicionais**: TODOS os outros artefatos necessários (array de objetos)
+   - Para MODULE_POOL: INCLUDE_TOP, SCREEN, SCREEN_LOGIC, INCLUDE_MODULES, INCLUDE_FORMS, CLASS_LOCAL
+   - Para CLASS: Separe definição e implementação se extenso
+   - Para programas complexos: SEMPRE subdivida logicamente
+
+3. **Quando subdividir (IMPORTANTE):**
+   - ❌ Se o programa é um REPORT SIMPLES (ALV_REPORT simples): Pode manter tudo em codigo_principal
+   - ✅ Se o programa é MODULE_POOL: OBRIGATORIAMENTE subdivida em INCLUDE_TOP, SCREEN, SCREEN_LOGIC, INCLUDE_MODULES, INCLUDE_FORMS
+   - ✅ Se há classes locais: Separe em CLASS_LOCAL
+   - ✅ Se há múltiplas forms: Separe em INCLUDE_FORMS
+   - ✅ Se há declarações extensas: Separe em INCLUDE_TOP
+   - ✅ Se há telas (MODULE_POOL): Separe em SCREEN e SCREEN_LOGIC
+
+**EXEMPLO DE RESPOSTA CORRETA PARA MODULE_POOL:**
+
+⚠️ **ATENÇÃO CRÍTICA: No campo "linhas", use NÚMEROS (50, 80, 150), NÃO palavras (fifty, eighty, one_hundred_fifty)!**
+
+{
+  "tipo": "codigo",
+  "codigo_principal": "PROGRAM zsales_order_app.\\n\\nINCLUDE zsales_order_app_top.\\nINCLUDE zsales_order_app_o01.\\nINCLUDE zsales_order_app_i01.\\nINCLUDE zsales_order_app_f01.",
+  "codigos_adicionais": [
+    {
+      "tipo": "INCLUDE_TOP",
+      "nome": "ZSALES_ORDER_APP_TOP",
+      "codigo": "* Include com todas as declarações globais\\nTABLES: ...\\nDATA: ...",
+      "descricao": "Include com declarações globais",
+      "linhas": 50,
+      "dependencias": [],
+      "usado_por": ["ZSALES_ORDER_APP"]
+    },
+    {
+      "tipo": "SCREEN",
+      "nome": "SCREEN_9000",
+      "codigo": "* Definição da tela 9000\\n...",
+      "descricao": "Tela principal do menu",
+      "linhas": 30,
+      "dependencias": [],
+      "usado_por": ["ZSALES_ORDER_APP"]
+    },
+    {
+      "tipo": "SCREEN_LOGIC",
+      "nome": "ZSALES_ORDER_APP_O01",
+      "codigo": "* PBO Modules\\nMODULE status_9000 OUTPUT.\\n...",
+      "descricao": "Módulos PBO",
+      "linhas": 80,
+      "dependencias": ["ZSALES_ORDER_APP_TOP"],
+      "usado_por": ["ZSALES_ORDER_APP"]
+    },
+    {
+      "tipo": "SCREEN_LOGIC",
+      "nome": "ZSALES_ORDER_APP_I01",
+      "codigo": "* PAI Modules\\nMODULE user_command_9000 INPUT.\\n...",
+      "descricao": "Módulos PAI",
+      "linhas": 60,
+      "dependencias": ["ZSALES_ORDER_APP_TOP"],
+      "usado_por": ["ZSALES_ORDER_APP"]
+    },
+    {
+      "tipo": "INCLUDE_FORMS",
+      "nome": "ZSALES_ORDER_APP_F01",
+      "codigo": "* Forms\\nFORM validate_and_save.\\n...",
+      "descricao": "Subroutines de validação e processamento",
+      "linhas": 150,
+      "dependencias": ["ZSALES_ORDER_APP_TOP"],
+      "usado_por": ["ZSALES_ORDER_APP"]
+    }
+  ],
+  "documentacao": { ... },
+  "configuracoes": { ... },
+  "dependencias": { ... },
+  "testes_sugeridos": [ ... ]
+}
 
 ## FORMATO OBRIGATÓRIO
+
+⚠️ **LEMBRE-SE: Todos os campos numéricos (como "linhas") devem conter NÚMEROS INTEIROS (50, 100, 200), NÃO palavras em inglês (fifty, one_hundred, two_hundred)!**
 
 Você DEVE retornar EXATAMENTE neste formato (e NADA mais):
 
