@@ -133,13 +133,12 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Usa getUser() em vez de getSession() para maior segurança
+    // Verifica autenticação
     const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
 
-    if (authError || !user) {
+    if (!session) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
@@ -167,7 +166,7 @@ export async function POST(request: NextRequest) {
       `
       )
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', session.user.id)
       .single()
 
     if (programaError) {
