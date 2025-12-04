@@ -9,13 +9,13 @@ interface SalvarAbapRequest {
   funcoes_modulos?: FuncaoModuloABAP[]
   processos?: string[]
   regras_negocio?: string[]
+
 }
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Verifica autenticação
     const {
       data: { session },
     } = await supabase.auth.getSession()
@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
     const body: SalvarAbapRequest = await request.json()
     const { programa, tabelas, campos, funcoes_modulos, processos, regras_negocio } = body
 
-    // Validação básica
     if (!programa || !programa.nome_programa || !programa.tipo_programa) {
       return NextResponse.json(
         { error: 'Dados do programa inválidos' },
@@ -41,7 +40,6 @@ export async function POST(request: NextRequest) {
       status: programa.status,
     })
 
-    // Inicia transação - insere programa principal
     const { data: programaData, error: programaError } = await supabase
       .from('programas_abap')
       .insert({
@@ -55,7 +53,6 @@ export async function POST(request: NextRequest) {
         especificacao: programa.especificacao || '',
         ef_upload: programa.ef_upload || null,
         ef_arquivo: programa.ef_arquivo || null,
-        contexto_especifico: programa.contexto_especifico || null,
         codigo_gerado: programa.codigo_gerado || null,
         perguntas_ia: programa.perguntas_ia || null,
         respostas_usuario: programa.respostas_usuario || null,
@@ -73,7 +70,6 @@ export async function POST(request: NextRequest) {
 
     const programaId = programaData.id
 
-    // Salva tabelas relacionadas
     if (tabelas && tabelas.length > 0) {
       const tabelasData = tabelas.map((t) => ({
         programa_id: programaId,
@@ -90,11 +86,9 @@ export async function POST(request: NextRequest) {
 
       if (tabelasError) {
         console.error('Erro ao salvar tabelas:', tabelasError)
-        // Continua mesmo com erro em tabelas
       }
     }
 
-    // Salva campos customizados
     if (campos && campos.length > 0) {
       const camposData = campos.map((c) => ({
         programa_id: programaId,
@@ -115,7 +109,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Salva funções/módulos
     if (funcoes_modulos && funcoes_modulos.length > 0) {
       const funcoesData = funcoes_modulos.map((f) => ({
         programa_id: programaId,
@@ -134,7 +127,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Salva processos
     if (processos && processos.length > 0) {
       const processosData = processos.map((p, index) => ({
         programa_id: programaId,
@@ -151,7 +143,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Salva regras de negócio
     if (regras_negocio && regras_negocio.length > 0) {
       const regrasData = regras_negocio.map((r, index) => ({
         programa_id: programaId,
@@ -187,7 +178,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Endpoint para atualizar programa existente
 export async function PUT(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
@@ -210,7 +200,6 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Atualiza programa
     const { data: programaData, error: programaError } = await supabase
       .from('programas_abap')
       .update({
@@ -222,7 +211,6 @@ export async function PUT(request: NextRequest) {
         logica_negocio: programa.logica_negocio,
         especificacao: programa.especificacao,
         codigo_gerado: programa.codigo_gerado,
-        contexto_especifico: programa.contexto_especifico,
         perguntas_ia: programa.perguntas_ia,
         respostas_usuario: programa.respostas_usuario,
       })

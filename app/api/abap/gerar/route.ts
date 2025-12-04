@@ -9,7 +9,6 @@ import {
   sanitizarJSON,
 } from '@/lib/prompts/abapprompt'
 import { AbapFormData } from '@/types/abap'
-import { logger } from '@/lib/utils/logger'
 import { createProviderManager } from '@/lib/providers/provider-manager'
 
 interface GerarAbapRequest {
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Verifica autenticação (usa getUser para maior segurança)
     const {
       data: { user },
       error: authError,
@@ -42,7 +40,6 @@ export async function POST(request: NextRequest) {
     const body: GerarAbapRequest = await request.json()
     const { formData, perguntasERespostas, modo = 'inicial' } = body
 
-    // Validação básica
     if (!formData || !formData.tipo_programa) {
       return new Response(
         encoder.encode(
@@ -55,7 +52,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validação de nome do programa (apenas para modo manual)
     if (formData.modo_criacao === 'manual' && !formData.nome_programa) {
       return new Response(
         encoder.encode(
@@ -68,35 +64,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Gera o prompt apropriado
     const systemPrompt =
       modo === 'refinamento' && perguntasERespostas
         ? gerarPromptRefinamentoABAP(formData, perguntasERespostas)
         : gerarPromptABAP(formData)
 
-    logger.info('=== INICIANDO GERAÇÃO ABAP ===', {
-      tipo: formData.tipo_programa,
-      nome: formData.nome_programa,
-      modo_criacao: formData.modo_criacao,
-      modo_geracao: modo,
-      temEF: !!formData.ef_texto,
-      temPerguntas: !!perguntasERespostas,
-      numPerguntas: perguntasERespostas?.length || 0,
-    })
-
-    logger.logPromptEnviado(systemPrompt)
-
-    // Cria stream
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Cria provider manager para o usuário
           const providerManager = await createProviderManager(user.id)
 
           let respostaCompleta = ''
           let bufferTemporario = ''
 
-          // Stream dos chunks usando o provider configurado
           for await (const chunk of providerManager.generateContentStream(
             [
               {
@@ -116,8 +96,6 @@ export async function POST(request: NextRequest) {
               respostaCompleta += content
               bufferTemporario += content
 
-              // Envia chunks para o cliente em tempo real
-              // Mas não envia blocos <thinking> (serão removidos depois)
               const data = JSON.stringify({
                 type: 'token',
                 content,
@@ -126,33 +104,11 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          logger.info('Resposta completa recebida da IA', {
-            tamanho: respostaCompleta.length,
-          })
-
-          logger.logRespostaIA(respostaCompleta, modo)
-
-          // Remove thinking blocks da resposta completa
           const respostaLimpa = removerThinkingBlocks(respostaCompleta)
-          logger.logRespostaLimpa(respostaLimpa)
-
-          // Extrai JSON da resposta
           const jsonLimpo = extrairJSON(respostaLimpa)
-          logger.logJSONExtraido(jsonLimpo)
-
-          // Valida a resposta (usa respostaLimpa para evitar problemas com thinking blocks)
           const validacao = validarRespostaABAP(respostaLimpa)
 
           if (!validacao.isValid) {
-            logger.logErroValidacao(validacao.error || 'Erro desconhecido', respostaCompleta)
-
-            logger.error('DETALHES DO ERRO DE VALIDAÇÃO', {
-              erro: validacao.error,
-              erroDetalhado: validacao.erroDetalhado,
-              jsonExtraido: validacao.jsonExtraido,
-              respostaLimpa: respostaLimpa.substring(0, 1000),
-              respostaCompleta: respostaCompleta.substring(0, 1000),
-            })
 
             const errorData = JSON.stringify({
               type: 'error',
@@ -163,21 +119,14 @@ export async function POST(request: NextRequest) {
             return
           }
 
-          // Parse do JSON (usa o JSON extraído da validação se disponível)
           let jsonParaParsear = validacao.jsonExtraido || jsonLimpo
 
-          // Sanitiza caracteres de controle problemáticos antes do parse
           jsonParaParsear = sanitizarJSON(jsonParaParsear)
 
           let respostaJSON: any
           try {
             respostaJSON = JSON.parse(jsonParaParsear)
           } catch (parseError: any) {
-            logger.error('ERRO AO PARSEAR JSON FINAL', {
-              erro: parseError.message,
-              jsonTruncado: jsonParaParsear.substring(0, 500),
-              tamanhoJSON: jsonParaParsear.length,
-            })
 
             const errorData = JSON.stringify({
               type: 'error',
@@ -188,18 +137,10 @@ export async function POST(request: NextRequest) {
             return
           }
 
-          logger.logSucesso(respostaJSON.tipo, {
-            tipo: respostaJSON.tipo,
-            temCodigo: !!respostaJSON.codigo_principal,
-            numPerguntas: respostaJSON.perguntas?.length || 0,
-            numCodigosAdicionais: respostaJSON.codigos_adicionais?.length || 0,
-          })
-
-          // Envia sinal de conclusão com os dados processados
           const doneData = JSON.stringify({
             type: 'done',
             resultado: respostaJSON,
-            raw_response: respostaCompleta, // Para debug/logs
+            raw_response: respostaCompleta,
           })
           controller.enqueue(encoder.encode(`data: ${doneData}\n\n`))
 
