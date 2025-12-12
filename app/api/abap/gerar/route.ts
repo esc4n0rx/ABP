@@ -8,8 +8,13 @@ import {
   validarRespostaABAP,
   sanitizarJSON,
 } from '@/lib/prompts/abapprompt'
+import {
+  gerarPromptABAPPuro,
+  gerarPromptRefinamentoABAPPuro,
+} from '@/lib/prompts/abapprompt-pure'
 import { AbapFormData } from '@/types/abap'
 import { createProviderManager } from '@/lib/providers/provider-manager'
+import { AbapGenerationConfig } from '@/app/api/abap/config/route'
 
 interface GerarAbapRequest {
   formData: AbapFormData
@@ -64,10 +69,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt =
-      modo === 'refinamento' && perguntasERespostas
-        ? gerarPromptRefinamentoABAP(formData, perguntasERespostas)
-        : gerarPromptABAP(formData)
+    // Buscar configuração de geração ABAP do usuário
+    const { data: config } = await supabase
+      .from('abap_generation_config')
+      .select('estilo_codigo')
+      .eq('user_id', user.id)
+      .single()
+
+    // Decidir qual prompt usar baseado na configuração do usuário
+    const estiloCodigoConfig = config?.estilo_codigo || 'oo' // Padrão: OO
+
+    let systemPrompt: string
+
+    if (estiloCodigoConfig === 'puro') {
+      // Usar prompt de ABAP Puro (procedural)
+      systemPrompt =
+        modo === 'refinamento' && perguntasERespostas
+          ? gerarPromptRefinamentoABAPPuro(formData, perguntasERespostas)
+          : gerarPromptABAPPuro(formData)
+    } else {
+      // Usar prompt de ABAP OO (padrão)
+      systemPrompt =
+        modo === 'refinamento' && perguntasERespostas
+          ? gerarPromptRefinamentoABAP(formData, perguntasERespostas)
+          : gerarPromptABAP(formData)
+    }
 
     const stream = new ReadableStream({
       async start(controller) {

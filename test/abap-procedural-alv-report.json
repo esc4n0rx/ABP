@@ -1,0 +1,185 @@
+{
+  "descricao": "Exemplo de teste para geração de Relatório ALV usando ABAP Procedural (Puro)",
+  "config": {
+    "estilo_codigo": "puro",
+    "usar_clean_code": true,
+    "usar_performance_otimizada": true,
+    "usar_tratamento_erros": true,
+    "usar_documentacao_inline": true,
+    "nivel_complexidade": "medio"
+  },
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "ALV_REPORT",
+    "nome_programa": "Z_VENDAS_MENSAIS",
+    "objetivo": "Gerar relatório de vendas mensais por vendedor com totalizadores",
+    "logica_negocio": "O programa deve listar todas as vendas do mês corrente agrupadas por vendedor, exibindo o valor total de vendas, quantidade de pedidos e comissão. Deve permitir filtrar por período, vendedor e centro. A saída deve ser em formato ALV com funcionalidades de ordenação e totalização.",
+    "processos": [
+      "Ler dados da tabela de vendas (VBRK e VBRP)",
+      "Calcular total de vendas por vendedor",
+      "Calcular quantidade de pedidos por vendedor",
+      "Calcular comissão (5% do valor total)",
+      "Exibir em ALV com totalizadores"
+    ],
+    "regras_negocio": [
+      "Considerar apenas vendas com status 'Faturado' (VBRK-FKSTO = '')",
+      "Comissão é 5% do valor líquido (VBRP-NETWR * 0.05)",
+      "Vendedores sem vendas não devem aparecer no relatório",
+      "Valores devem ser exibidos na moeda do documento",
+      "Permitir exportação para Excel"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "VBRK",
+        "tipo": "SAP Standard",
+        "descricao": "Cabeçalho de documento de faturamento",
+        "campos_usados": [
+          "VBELN",
+          "FKDAT",
+          "KUNAG",
+          "VKORG",
+          "VTWEG",
+          "SPART",
+          "FKSTO",
+          "WAERK"
+        ]
+      },
+      {
+        "nome_tabela": "VBRP",
+        "tipo": "SAP Standard",
+        "descricao": "Item de documento de faturamento",
+        "campos_usados": [
+          "VBELN",
+          "POSNR",
+          "MATNR",
+          "FKIMG",
+          "NETWR",
+          "MWSBP"
+        ]
+      },
+      {
+        "nome_tabela": "VBPA",
+        "tipo": "SAP Standard",
+        "descricao": "Parceiros de negócio do documento de vendas",
+        "campos_usados": [
+          "VBELN",
+          "PARVW",
+          "PERNR",
+          "KUNNR"
+        ]
+      },
+      {
+        "nome_tabela": "PA0001",
+        "tipo": "SAP Standard",
+        "descricao": "Dados organizacionais do empregado",
+        "campos_usados": [
+          "PERNR",
+          "ENAME",
+          "PERSG",
+          "PERSK"
+        ]
+      }
+    ],
+    "campos": [
+      {
+        "nome_campo": "PERNR",
+        "tipo_dado": "NUMC",
+        "tamanho": 8,
+        "descricao": "Número do vendedor",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "NOME_VENDEDOR",
+        "tipo_dado": "CHAR",
+        "tamanho": 40,
+        "descricao": "Nome completo do vendedor",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "TOTAL_VENDAS",
+        "tipo_dado": "CURR",
+        "tamanho": 15,
+        "descricao": "Valor total de vendas",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "QTD_PEDIDOS",
+        "tipo_dado": "INT4",
+        "tamanho": null,
+        "descricao": "Quantidade total de pedidos",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "COMISSAO",
+        "tipo_dado": "CURR",
+        "tamanho": 15,
+        "descricao": "Comissão calculada (5% do total)",
+        "obrigatorio": false
+      }
+    ],
+    "funcoes_modulos": [
+      {
+        "nome": "CONVERSION_EXIT_ALPHA_INPUT",
+        "tipo": "Function Module",
+        "descricao": "Converter número de pessoal para formato interno",
+        "parametros": "INPUT, OUTPUT"
+      },
+      {
+        "nome": "REUSE_ALV_GRID_DISPLAY",
+        "tipo": "Function Module",
+        "descricao": "Exibir relatório ALV em grid",
+        "parametros": "I_CALLBACK_PROGRAM, I_CALLBACK_TOP_OF_PAGE, IS_LAYOUT, IT_FIELDCAT, IT_SORT, T_OUTTAB"
+      },
+      {
+        "nome": "REUSE_ALV_FIELDCATALOG_MERGE",
+        "tipo": "Function Module",
+        "descricao": "Criar field catalog automaticamente",
+        "parametros": "I_PROGRAM_NAME, I_INTERNAL_TABNAME, I_INCLNAME, CT_FIELDCAT"
+      }
+    ],
+    "contexto_especifico": {
+      "tipo_alv": "GRID",
+      "permite_edicao": false,
+      "exibe_totalizadores": true,
+      "permite_layout_variante": true,
+      "zebrado": true,
+      "tipo_selecao_tela": "SELECT-OPTIONS",
+      "parametros_tela": [
+        {
+          "nome": "S_FKDAT",
+          "tipo": "SELECT-OPTIONS",
+          "descricao": "Data de faturamento",
+          "obrigatorio": true
+        },
+        {
+          "nome": "S_PERNR",
+          "tipo": "SELECT-OPTIONS",
+          "descricao": "Vendedor",
+          "obrigatorio": false
+        },
+        {
+          "nome": "S_VKORG",
+          "tipo": "SELECT-OPTIONS",
+          "descricao": "Organização de vendas",
+          "obrigatorio": false
+        },
+        {
+          "nome": "P_LAYOUT",
+          "tipo": "PARAMETER",
+          "descricao": "Layout de exibição",
+          "obrigatorio": false
+        }
+      ]
+    }
+  },
+  "modo": "inicial",
+  "observacoes": [
+    "Este JSON simula uma requisição para gerar um relatório ALV usando ABAP Procedural",
+    "O código gerado deve usar REUSE_ALV_* ao invés de CL_SALV_TABLE",
+    "Deve usar FORMS ao invés de métodos e classes",
+    "O código deve ser compatível com SAP ECC 6.0",
+    "Para testar, envie este JSON para a API /api/abap/gerar com método POST",
+    "Certifique-se de que a configuração do usuário está em 'puro' na tabela abap_generation_config"
+  ],
+  "exemplo_curl": "curl -X POST http://localhost:3000/api/abap/gerar -H 'Content-Type: application/json' -d @test/abap-procedural-alv-report.json"
+}

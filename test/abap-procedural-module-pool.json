@@ -1,0 +1,231 @@
+{
+  "descricao": "Exemplo de teste para geração de MODULE POOL usando ABAP Procedural (Puro)",
+  "config": {
+    "estilo_codigo": "puro",
+    "usar_clean_code": true,
+    "usar_performance_otimizada": true,
+    "usar_tratamento_erros": true,
+    "usar_documentacao_inline": true,
+    "nivel_complexidade": "medio"
+  },
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "MODULE_POOL",
+    "nome_programa": "ZSAP_CADASTRO_PRODUTO",
+    "objetivo": "Criar tela de cadastro de produtos com validações e gravação em tabela customizada",
+    "logica_negocio": "O programa deve exibir uma tela onde o usuário pode cadastrar novos produtos, editar produtos existentes ou deletar produtos. A tela deve ter campos para código do produto, descrição, unidade de medida, preço e status. Deve validar se o código já existe antes de criar e confirmar antes de deletar.",
+    "processos": [
+      "Exibir tela com campos de produto",
+      "Validar dados inseridos pelo usuário",
+      "Buscar produto existente para edição",
+      "Gravar novo produto ou atualizar existente",
+      "Deletar produto com confirmação",
+      "Exibir mensagens de sucesso/erro"
+    ],
+    "regras_negocio": [
+      "Código do produto deve ser único (máximo 18 caracteres)",
+      "Descrição é obrigatória (mínimo 5 caracteres)",
+      "Preço deve ser maior que zero",
+      "Status pode ser: 'A' (Ativo), 'I' (Inativo), 'B' (Bloqueado)",
+      "Ao deletar, exibir popup de confirmação",
+      "Campos obrigatórios devem ser destacados na tela"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "ZPRODUTOS",
+        "tipo": "Custom",
+        "descricao": "Tabela customizada de produtos",
+        "campos_usados": [
+          "MANDT",
+          "MATNR",
+          "MAKTX",
+          "MEINS",
+          "NETPR",
+          "STATUS",
+          "ERNAM",
+          "ERDAT",
+          "AENAM",
+          "AEDAT"
+        ]
+      },
+      {
+        "nome_tabela": "T006",
+        "tipo": "SAP Standard",
+        "descricao": "Unidades de medida",
+        "campos_usados": [
+          "MSEHI",
+          "MSEHL"
+        ]
+      }
+    ],
+    "campos": [
+      {
+        "nome_campo": "MATNR",
+        "tipo_dado": "CHAR",
+        "tamanho": 18,
+        "descricao": "Código do produto",
+        "obrigatorio": true
+      },
+      {
+        "nome_campo": "MAKTX",
+        "tipo_dado": "CHAR",
+        "tamanho": 40,
+        "descricao": "Descrição do produto",
+        "obrigatorio": true
+      },
+      {
+        "nome_campo": "MEINS",
+        "tipo_dado": "CHAR",
+        "tamanho": 3,
+        "descricao": "Unidade de medida",
+        "obrigatorio": true
+      },
+      {
+        "nome_campo": "NETPR",
+        "tipo_dado": "CURR",
+        "tamanho": 15,
+        "descricao": "Preço líquido",
+        "obrigatorio": true
+      },
+      {
+        "nome_campo": "STATUS",
+        "tipo_dado": "CHAR",
+        "tamanho": 1,
+        "descricao": "Status do produto (A/I/B)",
+        "obrigatorio": true
+      }
+    ],
+    "funcoes_modulos": [
+      {
+        "nome": "POPUP_TO_CONFIRM",
+        "tipo": "Function Module",
+        "descricao": "Exibir popup de confirmação",
+        "parametros": "TITLEBAR, TEXT_QUESTION, TEXT_BUTTON_1, TEXT_BUTTON_2, ANSWER"
+      },
+      {
+        "nome": "CONVERSION_EXIT_ALPHA_INPUT",
+        "tipo": "Function Module",
+        "descricao": "Converter código do produto",
+        "parametros": "INPUT, OUTPUT"
+      },
+      {
+        "nome": "CONVERSION_EXIT_ALPHA_OUTPUT",
+        "tipo": "Function Module",
+        "descricao": "Formatar código do produto para exibição",
+        "parametros": "INPUT, OUTPUT"
+      }
+    ],
+    "contexto_especifico": {
+      "numero_tela": "9000",
+      "tipo_tela": "NORMAL",
+      "campos_tela": [
+        {
+          "nome": "ZPRODUTOS-MATNR",
+          "tipo": "INPUT",
+          "tamanho": 18,
+          "linha": 2,
+          "coluna": 20
+        },
+        {
+          "nome": "ZPRODUTOS-MAKTX",
+          "tipo": "INPUT",
+          "tamanho": 40,
+          "linha": 3,
+          "coluna": 20
+        },
+        {
+          "nome": "ZPRODUTOS-MEINS",
+          "tipo": "INPUT",
+          "tamanho": 3,
+          "linha": 4,
+          "coluna": 20
+        },
+        {
+          "nome": "ZPRODUTOS-NETPR",
+          "tipo": "INPUT",
+          "tamanho": 15,
+          "linha": 5,
+          "coluna": 20
+        },
+        {
+          "nome": "ZPRODUTOS-STATUS",
+          "tipo": "RADIOBUTTON",
+          "opcoes": ["A", "I", "B"],
+          "linha": 6,
+          "coluna": 20
+        }
+      ],
+      "botoes_tela": [
+        {
+          "nome": "BTN_SALVAR",
+          "texto": "Salvar",
+          "funcao": "Gravar dados do produto"
+        },
+        {
+          "nome": "BTN_LIMPAR",
+          "texto": "Limpar",
+          "funcao": "Limpar campos da tela"
+        },
+        {
+          "nome": "BTN_DELETAR",
+          "texto": "Deletar",
+          "funcao": "Deletar produto selecionado"
+        },
+        {
+          "nome": "BTN_BUSCAR",
+          "texto": "Buscar",
+          "funcao": "Buscar produto por código"
+        }
+      ],
+      "modulos_pbo": [
+        "STATUS_9000",
+        "INICIALIZAR_CAMPOS"
+      ],
+      "modulos_pai": [
+        "USER_COMMAND_9000",
+        "VALIDAR_CAMPOS"
+      ]
+    }
+  },
+  "modo": "inicial",
+  "observacoes": [
+    "Este JSON simula uma requisição para gerar um MODULE POOL usando ABAP Procedural",
+    "O código gerado deve usar PROGRAM (não REPORT) no cabeçalho",
+    "Deve criar includes separados: TOP, O01 (PBO), I01 (PAI), F01 (FORMS)",
+    "Deve usar MODULE para lógica de tela ao invés de classes",
+    "Deve usar FORMS para validações e processamento",
+    "Não deve usar nenhuma classe (CL_*)",
+    "Para testar, envie este JSON para a API /api/abap/gerar com método POST"
+  ],
+  "resultado_esperado": {
+    "codigo_principal": "PROGRAM ZSAP_CADASTRO_PRODUTO com includes",
+    "codigos_adicionais": [
+      {
+        "tipo": "INCLUDE_TOP",
+        "nome": "ZSAP_CADASTRO_PRODUTO_TOP",
+        "descricao": "Declarações globais (TABLES, DATA, etc.)"
+      },
+      {
+        "tipo": "SCREEN",
+        "nome": "SCREEN_9000",
+        "descricao": "Definição da tela 9000"
+      },
+      {
+        "tipo": "SCREEN_LOGIC",
+        "nome": "ZSAP_CADASTRO_PRODUTO_O01",
+        "descricao": "Módulos PBO (Process Before Output)"
+      },
+      {
+        "tipo": "SCREEN_LOGIC",
+        "nome": "ZSAP_CADASTRO_PRODUTO_I01",
+        "descricao": "Módulos PAI (Process After Input)"
+      },
+      {
+        "tipo": "INCLUDE_FORMS",
+        "nome": "ZSAP_CADASTRO_PRODUTO_F01",
+        "descricao": "Subroutines (FORMS) para validação e processamento"
+      }
+    ]
+  },
+  "exemplo_curl": "curl -X POST http://localhost:3000/api/abap/gerar -H 'Content-Type: application/json' -d @test/abap-procedural-module-pool.json"
+}

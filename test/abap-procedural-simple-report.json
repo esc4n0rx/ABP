@@ -1,0 +1,117 @@
+{
+  "descricao": "Exemplo SIMPLES de teste para geração de REPORT usando ABAP Procedural (Puro) - Teste Rápido",
+  "config": {
+    "estilo_codigo": "puro",
+    "usar_clean_code": true,
+    "usar_performance_otimizada": true,
+    "usar_tratamento_erros": true,
+    "usar_documentacao_inline": false,
+    "nivel_complexidade": "simples"
+  },
+  "formData": {
+    "modo_criacao": "manual",
+    "tipo_programa": "REPORT",
+    "nome_programa": "Z_LISTA_MATERIAIS",
+    "objetivo": "Listar materiais cadastrados no sistema com filtros básicos",
+    "logica_negocio": "O programa deve buscar e exibir uma lista de materiais da tabela MARA com filtros de número do material, tipo de material e centro. A exibição deve ser simples usando WRITE statements.",
+    "processos": [
+      "Definir tela de seleção com filtros",
+      "Buscar materiais da MARA e MARC",
+      "Exibir lista formatada na tela"
+    ],
+    "regras_negocio": [
+      "Exibir no máximo 1000 registros",
+      "Ordenar por número do material",
+      "Exibir mensagem se não encontrar dados"
+    ],
+    "tabelas": [
+      {
+        "nome_tabela": "MARA",
+        "tipo": "SAP Standard",
+        "descricao": "Dados gerais de material",
+        "campos_usados": [
+          "MATNR",
+          "MAKTX",
+          "MTART",
+          "MEINS",
+          "ERSDA"
+        ]
+      },
+      {
+        "nome_tabela": "MARC",
+        "tipo": "SAP Standard",
+        "descricao": "Dados de material por centro",
+        "campos_usados": [
+          "MATNR",
+          "WERKS",
+          "PSTAT"
+        ]
+      }
+    ],
+    "campos": [
+      {
+        "nome_campo": "MATNR",
+        "tipo_dado": "CHAR",
+        "tamanho": 18,
+        "descricao": "Número do material",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "MAKTX",
+        "tipo_dado": "CHAR",
+        "tamanho": 40,
+        "descricao": "Descrição do material",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "MTART",
+        "tipo_dado": "CHAR",
+        "tamanho": 4,
+        "descricao": "Tipo de material",
+        "obrigatorio": false
+      },
+      {
+        "nome_campo": "WERKS",
+        "tipo_dado": "CHAR",
+        "tamanho": 4,
+        "descricao": "Centro",
+        "obrigatorio": false
+      }
+    ],
+    "funcoes_modulos": [],
+    "contexto_especifico": {
+      "tipo_saida": "WRITE",
+      "usar_alv": false,
+      "parametros_tela": [
+        {
+          "nome": "S_MATNR",
+          "tipo": "SELECT-OPTIONS",
+          "descricao": "Número do material",
+          "obrigatorio": false
+        },
+        {
+          "nome": "S_MTART",
+          "tipo": "SELECT-OPTIONS",
+          "descricao": "Tipo de material",
+          "obrigatorio": false
+        },
+        {
+          "nome": "S_WERKS",
+          "tipo": "SELECT-OPTIONS",
+          "descricao": "Centro",
+          "obrigatorio": false
+        }
+      ]
+    }
+  },
+  "modo": "inicial",
+  "observacoes": [
+    "Este é o exemplo mais SIMPLES para teste rápido",
+    "Deve gerar um REPORT básico com SELECT e WRITE",
+    "Não precisa de ALV, apenas exibição simples com WRITE",
+    "Deve usar FORMS para organizar a lógica",
+    "Ideal para validar se o prompt procedural está funcionando",
+    "Tempo de geração estimado: 30-60 segundos"
+  ],
+  "exemplo_curl": "curl -X POST http://localhost:3000/api/abap/gerar -H 'Content-Type: application/json' -d @test/abap-procedural-simple-report.json"
+}

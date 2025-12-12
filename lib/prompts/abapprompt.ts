@@ -498,19 +498,16 @@ Analise os dados fornecidos e decida:
 Processe agora!`
 }
 
-// Remove blocos <thinking> da resposta
 export function removerThinkingBlocks(texto: string): string {
   if (!texto) return ''
 
   let resultado = texto
 
-  // Padrões de thinking blocks comuns (ordem importa - mais específicos primeiro)
   const padroes = [
     /<thinking>[\s\S]*?<\/thinking>/gi,
     /<think>[\s\S]*?<\/think>/gi,
     /\[thinking\][\s\S]*?\[\/thinking\]/gi,
     /\[think\][\s\S]*?\[\/think\]/gi,
-    // Variações sem fechamento (caso a IA não feche o bloco)
     /<thinking>[\s\S]*/gi,
     /<think>[\s\S]*/gi,
   ]
@@ -519,29 +516,24 @@ export function removerThinkingBlocks(texto: string): string {
     resultado = resultado.replace(padrao, '')
   })
 
-  // Remove possíveis blocos de código markdown que envolvem o JSON
   resultado = resultado.replace(/```json\s*/gi, '')
   resultado = resultado.replace(/```\s*/gi, '')
 
-  // Remove texto antes do primeiro '{'
   const firstBrace = resultado.indexOf('{')
   if (firstBrace > 0) {
     resultado = resultado.substring(firstBrace)
   }
 
-  // Remove texto após o último '}'
   const lastBrace = resultado.lastIndexOf('}')
   if (lastBrace >= 0 && lastBrace < resultado.length - 1) {
     resultado = resultado.substring(0, lastBrace + 1)
   }
 
-  // Remove espaços extras e quebras de linha desnecessárias
   resultado = resultado.trim()
 
   return resultado
 }
 
-// Escapa newlines literais dentro de strings JSON
 export function escaparNewlinesEmStrings(jsonString: string): string {
   if (!jsonString) return '{}'
 
@@ -553,15 +545,12 @@ export function escaparNewlinesEmStrings(jsonString: string): string {
     const char = jsonString[i]
     const nextChar = jsonString[i + 1]
 
-    // Detecta escape sequences existentes
     if (char === '\\' && dentroString) {
-      // Já é um escape, mantém como está
       resultado += char + (nextChar || '')
       i += 2
       continue
     }
 
-    // Detecta início/fim de string
     if (char === '"') {
       dentroString = !dentroString
       resultado += char
@@ -569,7 +558,6 @@ export function escaparNewlinesEmStrings(jsonString: string): string {
       continue
     }
 
-    // Se estamos dentro de uma string, escapa newlines literais
     if (dentroString) {
       if (char === '\n') {
         resultado += '\\n'
@@ -595,51 +583,35 @@ export function escaparNewlinesEmStrings(jsonString: string): string {
   return resultado
 }
 
-// Sanitiza JSON removendo caracteres de controle inválidos
 export function sanitizarJSON(jsonString: string): string {
   if (!jsonString) return '{}'
 
-  // Primeiro, escapa newlines literais dentro de strings
   let sanitizado = escaparNewlinesEmStrings(jsonString)
 
-  // Remove caracteres de controle inválidos restantes (fora de strings)
   sanitizado = sanitizado
-    // Remove caracteres de controle ASCII 0-31 exceto \n (10), \r (13), \t (9)
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
-    // Remove caracteres Unicode de controle problemáticos
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
 
   return sanitizado
 }
-
-// Extrai JSON de uma resposta que pode conter texto adicional
 export function extrairJSON(texto: string): string {
   if (!texto) return '{}'
 
-  // Remove thinking blocks primeiro
   let textoLimpo = removerThinkingBlocks(texto)
 
-  // Sanitiza caracteres de controle
   textoLimpo = sanitizarJSON(textoLimpo)
 
-  // Múltiplas tentativas de extração de JSON
-
-  // Tentativa 1: Regex guloso para pegar o maior JSON possível
   let match = textoLimpo.match(/\{[\s\S]*\}/g)
   if (match && match.length > 0) {
-    // Pega o maior match (provavelmente o JSON completo)
     const biggestMatch = match.reduce((a, b) => a.length > b.length ? a : b)
 
-    // Valida se é JSON válido
     try {
       JSON.parse(biggestMatch)
       return biggestMatch
     } catch (e) {
-      // Se não for válido, continua para próxima tentativa
     }
   }
 
-  // Tentativa 2: Procura por { e } balanceados (considerando strings)
   let braceCount = 0
   let startIndex = -1
   let endIndex = -1
@@ -649,7 +621,6 @@ export function extrairJSON(texto: string): string {
   for (let i = 0; i < textoLimpo.length; i++) {
     const char = textoLimpo[i]
 
-    // Trata caracteres de escape
     if (escapeNext) {
       escapeNext = false
       continue
@@ -660,7 +631,6 @@ export function extrairJSON(texto: string): string {
       continue
     }
 
-    // Trata strings (ignora chaves dentro de strings)
     if (char === '"') {
       insideString = !insideString
       continue
@@ -670,7 +640,6 @@ export function extrairJSON(texto: string): string {
       continue
     }
 
-    // Conta chaves apenas fora de strings
     if (char === '{') {
       if (braceCount === 0) {
         startIndex = i
@@ -691,11 +660,9 @@ export function extrairJSON(texto: string): string {
       JSON.parse(jsonCandidate)
       return jsonCandidate
     } catch (e) {
-      // Continua se não for válido
     }
   }
 
-  // Tentativa 3: Remove tudo antes do primeiro { e depois do último }
   const firstBrace = textoLimpo.indexOf('{')
   const lastBrace = textoLimpo.lastIndexOf('}')
 
@@ -705,15 +672,12 @@ export function extrairJSON(texto: string): string {
       JSON.parse(jsonCandidate)
       return jsonCandidate
     } catch (e) {
-      // Continua
     }
   }
 
-  // Se nada funcionou, retorna o texto limpo
   return textoLimpo
 }
 
-// Valida se a resposta é de perguntas ou código
 export function validarRespostaABAP(resposta: string): {
   isValid: boolean
   tipo?: 'perguntas' | 'codigo' | 'erro'
@@ -729,10 +693,8 @@ export function validarRespostaABAP(resposta: string): {
     }
   }
 
-  // Remove thinking blocks
   const respostaLimpa = removerThinkingBlocks(resposta)
 
-  // Verifica violação de segurança
   if (respostaLimpa.includes('SECURITY_VIOLATION')) {
     return {
       isValid: false,
@@ -741,7 +703,6 @@ export function validarRespostaABAP(resposta: string): {
     }
   }
 
-  // Extrai JSON
   let jsonString = extrairJSON(respostaLimpa)
 
   if (!jsonString || jsonString.trim() === '' || jsonString === '{}') {
@@ -753,15 +714,12 @@ export function validarRespostaABAP(resposta: string): {
     }
   }
 
-  // Sanitiza novamente antes do parse (garantia adicional)
   jsonString = sanitizarJSON(jsonString)
 
-  // Tenta parsear JSON
   let json: any
   try {
     json = JSON.parse(jsonString)
   } catch (e: any) {
-    // Última tentativa: tenta extrair e sanitizar JSON novamente
     try {
       const jsonReextraido = extrairJSON(jsonString)
       const jsonSanitizado = sanitizarJSON(jsonReextraido)
@@ -776,7 +734,6 @@ export function validarRespostaABAP(resposta: string): {
     }
   }
 
-  // Valida estrutura
   if (!json.tipo) {
     return {
       isValid: false,
@@ -796,7 +753,6 @@ export function validarRespostaABAP(resposta: string): {
       }
     }
 
-    // Aceita entre 1 e 3 perguntas (mais flexível)
     if (json.perguntas.length === 0 || json.perguntas.length > 3) {
       return {
         isValid: false,
@@ -833,7 +789,6 @@ export function validarRespostaABAP(resposta: string): {
   }
 }
 
-// Função para gerar prompt de refinamento (quando usuário responde perguntas)
 export function gerarPromptRefinamentoABAP(
   formDataOriginal: AbapFormData,
   perguntasERespostas: Array<{ pergunta: string; resposta: string }>
